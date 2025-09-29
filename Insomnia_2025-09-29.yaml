@@ -1,0 +1,1073 @@
+type: collection.insomnia.rest/5.0
+name: BoatHall API
+meta:
+  id: wrk_f7fbb9afa95840d39665f4c015fd4360
+  created: 1758983206111
+  modified: 1758983206111
+  description: ""
+collection:
+  - name: Boats
+    meta:
+      id: fld_2c269360362a445e8a76e12507afaf7d
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/boats/1"
+        name: Get boat
+        meta:
+          id: req_00d1fab9065841a89c2f72e35e8a021e
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boats"
+        name: List boats
+        meta:
+          id: req_6acbb1116e2b4fa0a4b39378dc294938
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boats"
+        name: Create boat
+        meta:
+          id: req_6f4f1f2dad894647aca18cbb0726f69d
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"UID": 2, "name": "Aurora", "HIN": "HIN123", "Type": "Motor", "out":
+            null, "BHID": 1, "Drive": "Inboard", "QR": "qr-code"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boats/1"
+        name: Update boat
+        meta:
+          id: req_86eb34e6eb0d4c0682f83129dc029edf
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"name": "Aurora II"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boats/1"
+        name: Delete boat
+        meta:
+          id: req_9a2f07870ab04063ad2675947941125a
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Auth
+    meta:
+      id: fld_38758089ed5b4094b0302222aba65721
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/users/refresh"
+        name: Refresh
+        meta:
+          id: req_44575e4356f44e15aba2456f69dc120f
+          created: 1758400366923
+          modified: 1758400366923
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: POST
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/users/register"
+        name: Register (admin)
+        meta:
+          id: req_49b4465b69cf4d7f902687fad60ffed4
+          created: 1758400366923
+          modified: 1758400366923
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"Login": "admin", "Password": "Secret123!", "Email":
+            "admin@example.com", "Role": "Admin"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/users/logout"
+        name: Logout
+        meta:
+          id: req_50c4f73d00134955851ca74fe5667ef3
+          created: 1758400366923
+          modified: 1758400366923
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: POST
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/Auth/login"
+        name: Login
+        meta:
+          id: req_ad35bf049afc4d899cf4ec650aff3990
+          created: 1758400366923
+          modified: 1758982970881
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "Email": "admin@example.com",
+              "Password": "Secret123!"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+          - name: Accept
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Positions
+    meta:
+      id: fld_6b4839c073704460a09c641eaa3c5938
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/BoatPositions/hall/1"
+        name: List positions in hall
+        meta:
+          id: req_2cb7f0f85a474eabba03d1bc73a4389c
+          created: 1758400366926
+          modified: 1758991756825
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions/hall/1/simulate"
+        name: Simulate optimize
+        meta:
+          id: req_346e9fb3d9034b26aad0c6ecbec8b72a
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions/hall/1/optimize"
+        name: Confirm optimize
+        meta:
+          id: req_45d41dd953374d8dba23df18cae248f8
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"replaceAll": true, "placements": [{"BID": 1, "PosX": 0, "PosY": 0}]}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions/1"
+        name: Delete position
+        meta:
+          id: req_5d28b6909ade498598f09e575cab9250
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions/1"
+        name: Update position
+        meta:
+          id: req_80851c5fd1b44c29bc788eb6837b3fc7
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"PosX": 100}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions/boat/1"
+        name: Get position by boat
+        meta:
+          id: req_bc7afb912fd04e859594f3c956fb6d9e
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/positions"
+        name: Create position (manual)
+        meta:
+          id: req_c204b68f9f304c8b9f100f48b781e649
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"BHID": 1, "BID": 1, "PosX": 0, "PosY": 0}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Boathalls (staff)
+    meta:
+      id: fld_957691489bef4deca10c2e87d56a87a8
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/boathalls/1"
+        name: Get hall
+        meta:
+          id: req_9e944b71d14b49a08da335bc7e334d85
+          created: 1758400366925
+          modified: 1758983246249
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boathalls"
+        name: List halls
+        meta:
+          id: req_e045c0d0871a4c29ad6d3820549fd871
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boathalls"
+        name: Create hall
+        meta:
+          id: req_e573fcd978fe4e61a6bd094271599e5d
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"Length": 2000, "Width": 2000, "Height": 800, "MarginCM": 15}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boathalls/1"
+        name: Update hall
+        meta:
+          id: req_a12a2ed4002c4c1292f60d0442ae8b4a
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"MarginCM": 20}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/boathalls/1"
+        name: Delete hall
+        meta:
+          id: req_ec66e4e373ab497a8cbaa7a0fd452466
+          created: 1758400366926
+          modified: 1758400366926
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366926
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Engine
+    meta:
+      id: fld_a02fa09a81934361a851abcfbfd9dfb7
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/engine/1"
+        name: Get engine by boat
+        meta:
+          id: req_38417b05c2374df79c9f24605f688bbd
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/engine/1"
+        name: Delete engine
+        meta:
+          id: req_419e9e24eee8428f86d6dabd082ca256
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/engine/1"
+        name: Update engine
+        meta:
+          id: req_95b787e370b746d2af7bf9d4a1d01094
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Moto_H": 140}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/engine"
+        name: Create engine
+        meta:
+          id: req_c3d8402f95774dafa4f27ed84e1f6aa3
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"BID": 1, "Model": "D3", "Brand": "Volvo Penta", "Engine_nr": "X123",
+            "Reversing_gear": "RG", "Reversing_gear_nr": "RG-1", "Sterndrive":
+            "SD", "Sterndrive_nr": "SD-1", "Transom": "TR", "Transom_nr":
+            "TR-1", "BT": "Yes", "ST": "No", "Moto_H": 120}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Dimensions
+    meta:
+      id: fld_d0430a4b3b9d431d92239a1ba815ecd1
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/dimensions"
+        name: Create dimensions
+        meta:
+          id: req_032e90f2292b4b6bb0e4e5281376253e
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"BID": 1, "Length": 600, "Width": 240, "Height": 280, "Deepness": 60,
+            "Weight": 1500, "U_Color": "White", "Weight_we": 1400, "T_Color":
+            "Blue"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/dimensions/1"
+        name: Get dimensions
+        meta:
+          id: req_469811d8dd5b4b1b8f867d96f048ba2c
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/dimensions/1"
+        name: Update dimensions
+        meta:
+          id: req_8784507783be40518b3e169131f9e283
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Height": 285}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/dimensions/1"
+        name: Delete dimensions
+        meta:
+          id: req_d53c9a59d26d459bb64cf24338229933
+          created: 1758400366925
+          modified: 1758400366925
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366925
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Problems
+    meta:
+      id: fld_de096259a03c45a183ab78c025a32712
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/problems/1/status"
+        name: Update problem status
+        meta:
+          id: req_0455cef795f04b23850edb7e9599d0ef
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Status": "Resolved"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/problems/1/work"
+        name: Create Work from Problem
+        meta:
+          id: req_13332955ff9b41fa88d5909450b962cc
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"SID": 1, "Comment": "Fix oil leak"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/problems"
+        name: Create problem
+        meta:
+          id: req_8c0aac4a65414fdab4f021d95b55e2d5
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"BID": 1, "Description": "Oil leak"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/problems/1"
+        name: Update problem
+        meta:
+          id: req_8ff1663739b542c89c32a550b260bc50
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Description": "Oil leak near filter"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/problems"
+        name: List problems
+        meta:
+          id: req_f914ea3569ae4cea9ed5f42c094cd82a
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Users
+    meta:
+      id: fld_fa1076e618b0448385496f35cbfbd305
+      created: 1758400366922
+      modified: 1758400366922
+      sortKey: -1758400366922
+      description: ""
+    children:
+      - url: "{{ base_url }}/user/me"
+        name: Me
+        meta:
+          id: req_1c09e9e859b842029fcbedf308666411
+          created: 1758400366923
+          modified: 1758991851482
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/user"
+        name: List (admin)
+        meta:
+          id: req_2cb64f3a46cf4a6fbc895dc93edb100d
+          created: 1758400366923
+          modified: 1758991860077
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/user/2"
+        name: Get by id (admin)
+        meta:
+          id: req_a787fec950884efc86bba31d90563b2d
+          created: 1758400366923
+          modified: 1758991870377
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366923
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/users/3"
+        name: Admin delete user
+        meta:
+          id: req_2ea74ca7b177411299bc47a2a7370af1
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/users/2"
+        name: Admin update user
+        meta:
+          id: req_6a410960bbe34cb5b100c84e152a3e46
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Email": "changed@example.com", "Role": "Employee"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/users/me"
+        name: Update me
+        meta:
+          id: req_7233f3bcda0345688e27616b8b665e5c
+          created: 1758400366924
+          modified: 1758400366924
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366924
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"Email": "new@example.com"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Work
+    meta:
+      id: fld_50c704adc4324885bdc14d235414cbbf
+      created: 1758400366923
+      modified: 1758964892220
+      sortKey: -1758400366923
+      description: ""
+    children:
+      - url: "{{ base_url }}/work/1"
+        name: Get Work (example)
+        meta:
+          id: req_9250d994f5c44d06b8f23d45ed80012c
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/work/1"
+        name: Update Work (HR/State)
+        meta:
+          id: req_b139f96bf23f418d86f7040ec484791f
+          created: 1758400366927
+          modified: 1758400366927
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366927
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"HR": 2, "State": "Done"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: Storage
+    meta:
+      id: fld_6444290795b2476ba7a45fbac4d24ad8
+      created: 1758400366923
+      modified: 1758400366923
+      sortKey: -1758400366923
+      description: ""
+    children:
+      - url: "{{ base_url }}/storage/1"
+        name: Update storage (staff)
+        meta:
+          id: req_0b713311e63a4f7898f68959bbeb30eb
+          created: 1758400366928
+          modified: 1758400366928
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: PUT
+        body:
+          mimeType: application/json
+          text: '{"IsComing": false}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/BoatStorage"
+        name: List storage (staff)
+        meta:
+          id: req_351adadec67c4e04ac90712d11641662
+          created: 1758400366928
+          modified: 1758991833458
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/storage/1/budget"
+        name: Patch budget
+        meta:
+          id: req_635236404a234f6882303618bd03be3a
+          created: 1758400366928
+          modified: 1758400366928
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: '{"Budget": 5000}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/storage"
+        name: Create storage (staff)
+        meta:
+          id: req_8466211d205842c7a80aba03dec5a786
+          created: 1758400366928
+          modified: 1758400366928
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: POST
+        body:
+          mimeType: application/json
+          text: '{"BID": 1, "seasonID": 1, "IsComing": true, "ArrivalDate": "2025-10-01"}'
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/BoatStorage/mine"
+        name: My storage (client)
+        meta:
+          id: req_abaea487460442f3936cbb19ba6cbbb8
+          created: 1758400366928
+          modified: 1758991795393
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ base_url }}/storage/1"
+        name: Delete storage (staff)
+        meta:
+          id: req_cc5877effefb4540a17e3da7de483a7f
+          created: 1758400366928
+          modified: 1758983215745
+          isPrivate: false
+          description: ""
+          sortKey: -1758400366928
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_cee1c66e74ce499e89885a7578e50d9c
+    created: 1758808517278
+    modified: 1758983224191
+  cookies:
+    - key: token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicm9sZSI6IkFkbWluIiwiaWF0IjoxNzU4OTgzMjI0LCJleHAiOjE3NTkwNjk2MjR9.4qDxqRzFut0Fcd-e0rBxN9m5NYgEI0UXIosQw26DFS4
+      maxAge: 86400
+      domain: localhost
+      path: /
+      httpOnly: true
+      hostOnly: true
+      creation: 2025-09-27T14:27:04.191Z
+      lastAccessed: 2025-09-27T14:27:04.191Z
+      sameSite: lax
+      id: cd6edd86-2872-42fe-959f-d82211773075
+environments:
+  name: Base Environment
+  meta:
+    id: env_ee1f3ef99cc14458917b0b79eafa9d01
+    created: 1758808517221
+    modified: 1758981992629
+    isPrivate: false
+  data:
+    base_url: http://localhost:3000/api
+  subEnvironments:
+    - name: Local
+      meta:
+        id: env_0ebf502f9d994a92a1bc7108edb1dea5
+        created: 1758808517223
+        modified: 1758808517223
+        isPrivate: false
+        sortKey: 1758400366922
+      color: "#34a853"

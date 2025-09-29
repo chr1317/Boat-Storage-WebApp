@@ -1,6 +1,6 @@
 require("dotenv").config({ path: "../secret_key.env" });
 const { Sequelize } = require("sequelize");
-const initModels = require("./Models/Initmodels");
+const initModels = require("../Models/Initmodels");
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,

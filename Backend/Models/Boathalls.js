@@ -16,6 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     Height: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    MarginCM: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: parseInt(process.env.DEFAULT_HALL_MARGIN_CM || "15", 10)
     }
   }, {
     tableName: "boathalls",

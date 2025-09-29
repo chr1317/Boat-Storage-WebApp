@@ -1,7 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { models } = require("../db");
+const { models } = require("../Database/db");
 const auth = require("../Middleware/Auth");
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.post("/register", async (req, res) => {
 
     const existingUser = await models.Users.findOne({ where: { Email } });
     if (existingUser) {
-      return res.status(400).json({ error: "Użytkownik z tym adresem email już istnieje" });
+      return res.status(400).json({ error: "User with this email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(Password, 10);
@@ -30,25 +30,35 @@ router.post("/register", async (req, res) => {
       Role: Role || "Client" 
     });
 
-    res.status(201).json({ message: "Rejestracja udana", userId: newUser.UID });
+    res.status(201).json({ message: "Registered successfully", userId: newUser.UID });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Błąd serwera przy rejestracji" });
+    res.status(500).json({ error: "Server error while registering" });
   }
 });
 
 router.post("/login", async (req, res) => {
-  try {
-    const { Email, Password } = req.body;
 
-    const user = await models.Users.findOne({ where: { Email } });
-    if (!user) {
-      return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
+  try {
+    console.log("BODY SEEN BY EXPRESS:", req.body);
+    const body = req.body || {};
+    const email = body.Email;
+    const password = body.Password;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        error: "Email i Password są wymagane. Upewnij się, że wysyłasz JSON (Content-Type: application/json) lub x-www-form-urlencoded."
+      });
     }
 
-    const isPasswordValid = await bcrypt.compare(Password, user.Password);
+    const user = await models.Users.findOne({ where: { Email: email } });
+    if (!user) {
+      return res.status(401).json({ error: "Incorrect email or password" });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.Password);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Nieprawidłowy email lub hasło" });
+      return res.status(401).json({ error: "Incorrect email or password" });
     }
 
     const token = jwt.sign(
@@ -64,16 +74,16 @@ router.post("/login", async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000
     });
 
-    res.json({ message: "Zalogowano pomyślnie", role: user.Role });
+    res.json({ message: "Logged in successfully", role: user.Role });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Błąd serwera przy logowaniu" });
+    res.status(500).json({ error: "Server error while logging in" });
   }
 });
 
 router.post("/logout", (req, res) => {
   res.clearCookie("token");
-  res.json({ message: "Wylogowano" });
+  res.json({ message: "Logged out successfully" });
 });
 
 router.get("/me", auth(), async (req, res) => {
@@ -83,7 +93,7 @@ router.get("/me", auth(), async (req, res) => {
     });
     res.json(user);
   } catch (err) {
-    res.status(500).json({ error: "Błąd serwera przy pobieraniu danych" });
+    res.status(500).json({ error: "Server error while fetching user" });
   }
 });
 

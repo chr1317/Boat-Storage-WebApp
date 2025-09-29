@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     ArrivalDate: {
       type: DataTypes.DATEONLY,
-      allowNull: false
+      allowNull: true
     },
     seasonID: {
       type: DataTypes.INTEGER,

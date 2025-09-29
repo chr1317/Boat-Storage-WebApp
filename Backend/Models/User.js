@@ -12,19 +12,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     Lastname: {
       type: DataTypes.STRING(30),
-      allowNull: false
+      allowNull: true
     },
     City: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Street: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     StreetNr: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     PhoneNr: {
       type: DataTypes.STRING(13),
@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     PostNr: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     Role: {
       type: DataTypes.ENUM("Admin", "Employee", "Client"),

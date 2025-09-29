@@ -1,15 +1,15 @@
 var DataTypes = require("sequelize").DataTypes;
 
-var _Boats = require("./Boats");
+var _Boats = require("./Boat");
 var _Boathalls = require("./Boathalls");
 var _BoatDimensions = require("./Boatdimensions");
-var _BoatStorage = require("./BoatStorage");
-var _BoatPosition = require("./BoatPosition");
-var _EngineInformation = require("./EngineInformation");
+var _BoatStorage = require("./Boat_Storage");
+var _BoatPosition = require("./BoatPositions");
+var _EngineInformation = require("./Engine_Information");
 var _Problems = require("./Problems");
 var _Seasons = require("./Seasons");
 var _Services = require("./Services");
-var _Users = require("./Users");
+var _Users = require("./User");
 var _Work = require("./Work");
 
 function initModels(sequelize) {

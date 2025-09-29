@@ -11,7 +11,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     BID: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: false,
+      unique: true
     },
     PosX: {
       type: DataTypes.DECIMAL(6, 2),

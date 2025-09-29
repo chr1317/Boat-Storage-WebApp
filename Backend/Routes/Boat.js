@@ -7,30 +7,75 @@ const router = express.Router();
 
 // Edytowalne pola
 const BOAT_FIELDS_USER = ["name", "HIN", "Type", "Drive", "BHID", "QR"];
-const BOAT_FIELDS_ADMIN = ["UID", ...BOAT_FIELDS_USER];
+const BOAT_FIELDS = ["UID", ...BOAT_FIELDS_USER];
+const DIM_FIELDS  = ["Length","Width","Height","Deepness","Weight","U_Color","Weight_we","T_Color"];
+const ENGINE_FIELDS = [
+  "Model","Brand","Engine_nr","Reversing_gear","Reversing_gear_nr",
+  "Sterndrive","Sterndrive_nr","Transom","Transom_nr","BT","ST","Moto_H"
+];
 
 /** CREATE: POST /boats
  *  Client → tworzy dla siebie; Admin/Employee → może wskazać UID
  *  Transakcja: tworzenie łodzi
  */
-router.post("/", auth(["Admin","Employee","Client"]), async (req, res) => {
+router.post("/", auth(["Admin","Employee"]), async (req, res) => {
   const t = await sequelize.transaction();
   try {
-    const isAdmin = ["Admin","Employee"].includes(req.user.role);
-    const payload = {};
-    for (const k of isAdmin ? BOAT_FIELDS_ADMIN : BOAT_FIELDS_USER) {
-      if (req.body[k] !== undefined) payload[k] = req.body[k];
-    }
-    payload.UID = isAdmin ? (payload.UID ?? req.user.id) : req.user.id;
-    if (req.body.out !== undefined) payload.out = req.body.out; // opcjonalnie
+    const { boat: boatBody, dimensions: dimBody, engine: engBody } = req.body || {};
 
-    const boat = await models.Boats.create(payload, { transaction: t });
+    // Basic presence checks
+    if (!boatBody || !dimBody || !engBody) {
+      await t.rollback();
+      return res.status(400).json({ error: "Body must include boat, dimensions and engine objects" });
+    }
+
+    // Minimal validations
+    const requiredBoat = ["name","HIN","Type","BHID","Drive","QR"];
+    const missingBoat = requiredBoat.filter(k => boatBody[k] === undefined || boatBody[k] === null);
+    if (missingBoat.length) {
+      await t.rollback();
+      return res.status(400).json({ error: `Missing boat fields: ${missingBoat.join(", ")}` });
+    }
+
+    const requiredDims = ["Length","Width"]; // reszta opcjonalnie
+    const missingDims = requiredDims.filter(k => dimBody[k] === undefined || dimBody[k] === null);
+    if (missingDims.length) {
+      await t.rollback();
+      return res.status(400).json({ error: `Missing dimensions fields: ${missingDims.join(", ")}` });
+    }
+
+    const requiredEngine = ["Model","Brand","Engine_nr","Reversing_gear","Reversing_gear_nr","Sterndrive","Sterndrive_nr","Transom","Transom_nr","BT","ST","Moto_H"];
+    const missingEngine = requiredEngine.filter(k => engBody[k] === undefined || engBody[k] === null);
+    if (missingEngine.length) {
+      await t.rollback();
+      return res.status(400).json({ error: `Missing engine fields: ${missingEngine.join(", ")}` });
+    }
+
+    // Build payloads (whitelisting)
+    const boatPayload = {};
+    for (const k of BOAT_FIELDS) if (boatBody[k] !== undefined) boatPayload[k] = boatBody[k];
+    // UID default = creator
+    boatPayload.UID = boatPayload.UID ?? req.user.id;
+
+    // Create Boat
+    const boat = await models.Boats.create(boatPayload, { transaction: t });
+
+    // Create Dimensions
+    const dimPayload = { BID: boat.BID };
+    for (const k of DIM_FIELDS) if (dimBody[k] !== undefined) dimPayload[k] = dimBody[k];
+    await models.BoatDimensions.create(dimPayload, { transaction: t });
+
+    // Create Engine
+    const engPayload = { BID: boat.BID };
+    for (const k of ENGINE_FIELDS) if (engBody[k] !== undefined) engPayload[k] = engBody[k];
+    await models.EngineInformation.create(engPayload, { transaction: t });
+
     await t.commit();
-    res.status(201).json(boat);
+    res.status(201).json({ message: "Boat created with dimensions and engine", BID: boat.BID });
   } catch (e) {
     await t.rollback();
     console.error(e);
-    res.status(500).json({ error: "Server error while creating boat" });
+    res.status(500).json({ error: "Server error while creating boat with details" });
   }
 });
 
@@ -103,7 +148,7 @@ router.put("/:id", auth(["Admin","Employee","Client"]), async (req, res) => {
     }
 
     const updates = {};
-    const allowed = isAdmin ? BOAT_FIELDS_ADMIN : BOAT_FIELDS_USER;
+    const allowed = isAdmin ? BOAT_FIELDS : BOAT_FIELDS_USER;
     for (const k of allowed) {
       if (req.body[k] !== undefined) updates[k] = req.body[k];
     }

@@ -19,11 +19,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     Height: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     Deepness: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     Weight: {
       type: DataTypes.INTEGER,
@@ -31,15 +31,15 @@ module.exports = (sequelize, DataTypes) => {
     },
     U_Color: {
       type: DataTypes.STRING(10),
-      allowNull: false
+      allowNull: true
     },
     Weight_we: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     T_Color: {
       type: DataTypes.STRING(20),
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: "boat_dimensions",

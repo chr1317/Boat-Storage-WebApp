@@ -7,17 +7,32 @@ const router = express.Router();
 
 const DEFAULT_HALL_MARGIN_CM = parseInt(process.env.DEFAULT_HALL_MARGIN_CM || "15", 10);
 
+function toNum(v) { return typeof v === 'number' ? v : parseFloat(v); }
+function asRect(r) {
+  return {
+    BHID: r.BHID,
+    BID: r.BID,
+    PosX: toNum(r.PosX),
+    PosY: toNum(r.PosY),
+    Width: toNum(r.Width),
+    Length: toNum(r.Length),
+    PositionID: r.PositionID
+  };
+}
 /* geometry */
 function overlaps(a,b){
-  const x = a.PosX < b.PosX + b.Width && a.PosX + a.Width > b.PosX;
-  const y = a.PosY < b.PosY + b.Length && a.PosY + a.Length > b.PosY;
+  const ax1 = a.PosX,       ay1 = a.PosY;
+  const ax2 = a.PosX + a.Width,  ay2 = a.PosY + a.Length;
+  const bx1 = b.PosX,       by1 = b.PosY;
+  const bx2 = b.PosX + b.Width,  by2 = b.PosY + b.Length;
+  const x = ax1 < bx2 && ax2 > bx1;
+  const y = ay1 < by2 && ay2 > by1;
   return x && y;
 }
 function withinHall(rect, hall){
-  return rect.PosX >= 0 && rect.PosY >= 0 &&
-         rect.Width > 0 && rect.Length > 0 &&
-         rect.PosX + rect.Width <= hall.Width &&
-         rect.PosY + rect.Length <= hall.Length;
+  const xOk = rect.PosX >= 0 && rect.PosX + rect.Width  <= toNum(hall.Width);
+  const yOk = rect.PosY >= 0 && rect.PosY + rect.Length <= toNum(hall.Length);
+  return xOk && yOk && rect.Width > 0 && rect.Length > 0;
 }
 
 /* helpers */
@@ -26,18 +41,23 @@ async function paddedDimsForBoat(bid, bhid, t) {
   const hall = await models.Boathalls.findByPk(bhid, { transaction:t });
   if (!dims || !hall) return null;
   const m = Number.isInteger(hall.MarginCM) ? hall.MarginCM : DEFAULT_HALL_MARGIN_CM;
-  return { Length: (dims.Length ?? 0) + m, Width: (dims.Width ?? 0) + m, margin: m };
+  return { Length: toNum(dims.Length) + m, Width: toNum(dims.Width) + m, margin: m };
 }
 async function validateRect(rect, excludeId, t){
   const hall = await models.Boathalls.findByPk(rect.BHID,{transaction:t});
   if(!hall) return { error: "Boathall not found" };
-  if (!withinHall(rect, hall)) return { error: "Rectangle exceeds boathall bounds" };
+
+  const R = asRect(rect);
+  if (!withinHall(R, hall)) return { error: "Rectangle exceeds boathall bounds" };
 
   const where = { BHID: rect.BHID };
   if (excludeId) where.PositionID = { [Op.ne]: excludeId };
-  const others = await models.BoatPosition.findAll({ where, transaction: t });
-  for (const o of others) if (overlaps(rect, o)) return { error: "Rectangle overlaps with an existing boat" };
+  const othersRaw = await models.BoatPosition.findAll({ where, transaction: t });
+  const others = othersRaw.map(asRect);
 
+  for (const o of others) {
+    if (overlaps(R, o)) return { error: "Rectangle overlaps with an existing boat" };
+  }
   return { ok: true };
 }
 
@@ -58,7 +78,13 @@ router.post("/", auth(["Admin","Employee"]), async (req,res)=>{
     const dims = await paddedDimsForBoat(BID, BHID, t);
     if (!dims || dims.Length<=0 || dims.Width<=0) { await t.rollback(); return res.status(400).json({ error:"Missing boat dimensions" }); }
 
-    const rect = { BHID, BID, PosX, PosY, Length: dims.Length, Width: dims.Width };
+    const rect = {
+      BHID, BID,
+      PosX: toNum(PosX),
+      PosY: toNum(PosY),
+      Length: toNum(dims.Length),
+      Width:  toNum(dims.Width)
+    };
     const check = await validateRect(rect, null, t);
     if (check.error){ await t.rollback(); return res.status(400).json({ error: check.error }); }
 

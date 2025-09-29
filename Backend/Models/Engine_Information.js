@@ -20,7 +20,6 @@ module.exports = (sequelize, DataTypes) => {
     Engine_nr: {
       type: DataTypes.STRING(50),
       allowNull: false,
-      unique: true
     },
     Reversing_gear: {
       type: DataTypes.STRING(15),

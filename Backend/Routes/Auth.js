@@ -47,7 +47,7 @@ router.post("/login", async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({
-        error: "Email i Password są wymagane. Upewnij się, że wysyłasz JSON (Content-Type: application/json) lub x-www-form-urlencoded."
+        error: "Email and password are required"
       });
     }
 

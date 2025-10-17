@@ -1,0 +1,20 @@
+{
+  "app": {
+    "title": "BoatHall - Hallhantering",
+    "language": "Språk"
+},
+"login": {
+    "email": "E-post",
+    "password": "Lösenord",
+    "login": "Logga in",
+    "login_success": "Du har loggat in",
+    "logout": "Logga ut",
+    "password_min_length": "Lösenordet måste vara minst 6 tecken långt",
+    "password_max_length": "Lösenordet måste vara max 50 tecken långt",
+    "password_lowercase_req": "Lösenordet måste innehålla minst en liten bokstav",
+    "password_uppercase_req": "Lösenordet måste innehålla minst en stor bokstav",
+    "password_number_req": "Lösenordet måste innehålla minst ett nummer",
+    "password_special_req": "Lösenordet måste innehålla minst ett specialtecken",
+    "bad_email_format": "Ogiltig e-postformat"
+  }
+}

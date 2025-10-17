@@ -1,0 +1,20 @@
+{
+  "app": {
+    "title": "BoatHall - Hall Management",
+    "language": "Language" 
+  },
+  "login": {
+    "email": "Email",
+    "password": "Password",
+    "login": "Log in",
+    "login_success": "You have been logged in",
+    "logout": "Log out",
+    "password_min_length": "Password must be at least 6 characters long",
+    "password_max_length": "Password must be at most 50 characters long",
+    "password_lowercase_req": "Password must contain at least one lowercase letter",
+    "password_uppercase_req": "Password must contain at least one uppercase letter",
+    "password_number_req": "Password must contain at least one number",
+    "password_special_req": "Password must contain at least one special character",
+    "bad_email_format": "Bad email format"
+  }
+}

@@ -6,6 +6,7 @@ import "primeicons/primeicons.css";
 import App from './App.vue'
 import router from './router/index.js';
 import Aura from '@primeuix/themes/aura';
+import './assets/boat-theme.css';
 import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
 import i18n from './I18n-Language/index.js';

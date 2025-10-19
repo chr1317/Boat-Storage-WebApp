@@ -2,7 +2,14 @@
   "app": {
     "title": "BoatHall - Hallhantering",
     "language": "Språk"
-},
+  },
+  "routes": {
+    "Dashboard": "Instrumentpanel",
+    "Settings": "Inställningar",
+    "Login": "Inloggningssida",
+    "Boats": "Båtar",
+    "BoatDetails": "Båt detaljer"
+  },
 "login": {
     "email": "E-post",
     "password": "Lösenord",
@@ -16,5 +23,17 @@
     "password_number_req": "Lösenordet måste innehålla minst ett nummer",
     "password_special_req": "Lösenordet måste innehålla minst ett specialtecken",
     "bad_email_format": "Ogiltig e-postformat"
+  },
+  "boat": {
+    "owner": "Ägare",
+    "phone": "Ägares telefonnummer",
+    "boathall": "Boathall",
+    "qr": "Båt QR-kod",
+    "info_tab": "Info",
+    "engine_tab": "Motor",
+    "service_tab": "Arbete",
+    "works_title": "Arbetsuppgifter",
+    "problems_tab": "Problemer",
+    "no_works": "Inga arbeter finns"
   }
 }

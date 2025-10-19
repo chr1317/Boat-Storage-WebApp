@@ -1,7 +1,14 @@
 {
   "app": {
     "title": "BoatHall - Hall Management",
-    "language": "Language" 
+    "language": "Language"
+  },
+  "routes": {
+    "Dashboard": "Dashboard",
+    "Settings": "Settings",
+    "Login": "Login page",
+    "Boats": "Boats",
+    "BoatDetails": "Boat details"
   },
   "login": {
     "email": "Email",
@@ -16,5 +23,17 @@
     "password_number_req": "Password must contain at least one number",
     "password_special_req": "Password must contain at least one special character",
     "bad_email_format": "Bad email format"
+  },
+  "boat": {
+    "owner": "Owner",
+    "phone": "Owners phone number",
+    "boathall": "BoatHall",
+    "qr": "Boat QR code",
+    "info_tab": "Info",
+    "engine_tab": "Engine",
+    "service_tab": "Works",
+    "works_title": "Works",
+    "problems_tab": "Problems",
+    "no_works": "No works scheduled"
   }
 }

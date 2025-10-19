@@ -10,14 +10,14 @@ router.post("/register", async (req, res) => {
   try {
     const { Name, Lastname, City, Street, StreetNr, PhoneNr, Email, Password, PostNr, Role } = req.body;
 
-    const existingUser = await models.Users.findOne({ where: { Email } });
+    const existingUser = await models.User.findOne({ where: { Email } });
     if (existingUser) {
       return res.status(400).json({ error: "User with this email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(Password, 10);
 
-    const newUser = await models.Users.create({
+    const newUser = await models.User.create({
       Name,
       Lastname,
       City,
@@ -38,7 +38,7 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-
+  console.log("BODY:", req.body); 
   try {
     console.log("BODY SEEN BY EXPRESS:", req.body);
     const body = req.body || {};
@@ -51,7 +51,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const user = await models.Users.findOne({ where: { Email: email } });
+    const user = await models.User.findOne({ where: { Email: email } });
     if (!user) {
       return res.status(401).json({ error: "Incorrect email or password" });
     }
@@ -88,7 +88,7 @@ router.post("/logout", (req, res) => {
 
 router.get("/me", auth(), async (req, res) => {
   try {
-    const user = await models.Users.findByPk(req.user.id, {
+    const user = await models.User.findByPk(req.user.id, {
       attributes: { exclude: ["Password"] }
     });
     res.json(user);

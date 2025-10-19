@@ -9,7 +9,7 @@ var _EngineInformation = require("./Engine_Information");
 var _Problems = require("./Problems");
 var _Seasons = require("./Seasons");
 var _Services = require("./Services");
-var _Users = require("./User");
+var _User = require("./User");
 var _Work = require("./Work");
 
 function initModels(sequelize) {
@@ -22,12 +22,12 @@ function initModels(sequelize) {
   var Problems = _Problems(sequelize, DataTypes);
   var Seasons = _Seasons(sequelize, DataTypes);
   var Services = _Services(sequelize, DataTypes);
-  var Users = _Users(sequelize, DataTypes);
+  var User = _User(sequelize, DataTypes);
   var Work = _Work(sequelize, DataTypes);
 
-  // 🔹 Users ↔ Boats
-  Boats.belongsTo(Users, { foreignKey: "UID", onDelete: "CASCADE", onUpdate: "CASCADE" });
-  Users.hasMany(Boats, { foreignKey: "UID" });
+  // 🔹 User ↔ Boats
+  Boats.belongsTo(User, { foreignKey: "UID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  User.hasMany(Boats, { foreignKey: "UID" });
 
   // 🔹 Boats ↔ Boathalls
   Boats.belongsTo(Boathalls, { foreignKey: "BHID", onUpdate: "CASCADE" });
@@ -62,7 +62,7 @@ function initModels(sequelize) {
   Problems.belongsTo(Work, { foreignKey: "WID", onDelete: "SET NULL", onUpdate: "CASCADE" });
   Work.hasMany(Problems, { foreignKey: "WID" });
 
-  // 🔹 Boats ↔ Work ↔ Seasons ↔ Services ↔ Users
+  // 🔹 Boats ↔ Work ↔ Seasons ↔ Services ↔ User
   Work.belongsTo(Boats, { foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boats.hasMany(Work, { foreignKey: "BID" });
 
@@ -72,8 +72,8 @@ function initModels(sequelize) {
   Work.belongsTo(Services, { foreignKey: "SID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Services.hasMany(Work, { foreignKey: "SID" });
 
-  Work.belongsTo(Users, { foreignKey: "UID", onDelete: "SET NULL", onUpdate: "CASCADE" });
-  Users.hasMany(Work, { foreignKey: "UID" });
+  Work.belongsTo(User, { foreignKey: "UID", onDelete: "SET NULL", onUpdate: "CASCADE" });
+  User.hasMany(Work, { foreignKey: "UID" });
 
   return {
     Boats,
@@ -85,7 +85,7 @@ function initModels(sequelize) {
     Problems,
     Seasons,
     Services,
-    Users,
+    User,
     Work,
   };
 }

@@ -36,7 +36,7 @@
     </div>
   </Message>
 </div>
-      <Button type="submit" severity="secondary" label="Login" />
+      <Button type="submit" severity="secondary" :label="t('login.login')" />
     </Form>
   </div>
 </template>
@@ -94,8 +94,8 @@ watch(locale, async () => {
 async function HandleLogin(values) {
   try {
     await auth.login({
-    Email: values.states.email.value, 
-    Password: values.states.password.value
+      Email: values.states.email.value,
+      Password: values.states.password.value,
     });
 
     toast.add({
@@ -104,7 +104,11 @@ async function HandleLogin(values) {
       detail: t('login.login_success'),
       life: 3000,
     });
-      router.push('/home');
+
+    // 🔥 obsługa redirectu (jeśli np. przyszedł z QR)
+    const redirect = router.currentRoute.value.query.redirect || "/home";
+    router.push(redirect);
+
   } catch (err) {
     toast.add({
       severity: 'error',

@@ -43,22 +43,22 @@ async function seed(force = false) {
 
   await ensureUniqueIndexBoatStorage();
 
-  // Users
-  const admin = await models.Users.create({
+  // User
+  const admin = await models.User.create({
     Name: 'admin',
     Password: await bcrypt.hash('Secret123!', 10),
     Email: 'admin@example.com',
     Role: 'Admin',
     PhoneNr: '123456789',
   });
-  const employee = await models.Users.create({
+  const employee = await models.User.create({
     Name: 'worker1',
     Password: await bcrypt.hash('Worker123!', 10),
     Email: 'worker1@example.com',
     Role: 'Employee',
     PhoneNr: '123456789',
   });
-  const client = await models.Users.create({
+  const client = await models.User.create({
     Name: 'client1',
     Password: await bcrypt.hash('Client123!', 10),
     Email: 'client1@example.com',

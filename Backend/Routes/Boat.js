@@ -91,7 +91,7 @@ router.get("/", auth(["Admin","Employee","Client"]), async (req, res) => {
       where,
       order: [["BID","ASC"]],
       include: [
-        { model: models.Users, attributes: { exclude: ["Password"] } },
+        { model: models.User, attributes: { exclude: ["Password"] } },
         { model: models.Boathalls },
         { model: models.BoatDimensions },
         { model: models.EngineInformation },
@@ -114,7 +114,7 @@ router.get("/:id", auth(["Admin","Employee","Client"]), async (req, res) => {
 
     const boat = await models.Boats.findByPk(id, {
       include: [
-        { model: models.Users, attributes: { exclude: ["Password"] } },
+        { model: models.User, attributes: { exclude: ["Password"] } },
         { model: models.Boathalls },
         { model: models.BoatDimensions },
         { model: models.EngineInformation },
@@ -252,5 +252,41 @@ router.put("/:id/out", auth(["Admin","Employee","Client"]), async (req, res) => 
     res.status(500).json({ error: "Server error while setting out" });
   }
 });
+
+/** FIND BY QR: GET /boats/byqr/:qr
+ *  Dostępne tylko po zalogowaniu.
+ *  Admin/Employee → dowolna łódź
+ *  Client → tylko własna łódź
+ */
+router.get("/byqr/:qr", auth(["Admin","Employee","Client"]), async (req, res) => {
+  try {
+    const { qr } = req.params;
+    if (!qr) return res.status(400).json({ error: "Missing QR parameter" });
+
+    const boat = await models.Boats.findOne({
+      where: { QR: qr },
+      include: [
+        { model: models.User, attributes: { exclude: ["Password"] } },
+        { model: models.Boathalls },
+        { model: models.BoatDimensions },
+        { model: models.EngineInformation },
+        { model: models.BoatPosition },
+      ],
+    });
+
+    if (!boat) return res.status(404).json({ error: "Boat not found" });
+
+    const isAdmin = ["Admin","Employee"].includes(req.user.role);
+    if (!isAdmin && boat.UID !== req.user.id) {
+      return res.status(403).json({ error: "No permission to access this boat" });
+    }
+
+    res.json(boat);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error while getting boat by QR" });
+  }
+});
+
 
 module.exports = router;

@@ -18,7 +18,7 @@ app.use((req, _res, next) => {
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map(s => s.trim())
-  : ["http://localhost:5173","http://localhost:3000"]; // IP:port frontu w LAN dla QR testów
+  : ["http://localhost:5173","http://localhost:3000", "http://192.168.68.113:5173"]; // IP:port frontu w LAN dla QR testów
 app.use(cors({
   origin: CORS_ORIGIN,
   credentials: true,

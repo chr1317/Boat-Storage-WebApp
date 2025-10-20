@@ -1,14 +1,21 @@
 {
   "app": {
     "title": "BoatHall - Hall Management",
-    "language": "Language"
+    "language": "Language",
+    "theme": "Dark mode",
+    "settings": "Settings"
+  },
+  "common": {
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "routes": {
     "Dashboard": "Dashboard",
     "Settings": "Settings",
     "Login": "Login page",
     "Boats": "Boats",
-    "BoatDetails": "Boat details"
+    "BoatDetails": "Boat details",
+    "Services": "Services"
   },
   "login": {
     "email": "Email",
@@ -34,6 +41,33 @@
     "service_tab": "Works",
     "works_title": "Works",
     "problems_tab": "Problems",
-    "no_works": "No works scheduled"
+    "no_works": "No works scheduled",
+    "service": "Service",
+    "part": "Part",
+    "date": "Date",
+    "worker": "Worker",
+    "hours": "Hours",
+    "comment": "Comment",
+    "status": "Status",
+    "actions": "Actions",
+    "addWork": "Add work",
+    "changeState": "Change work state",
+    "delete": "Delete work",
+    "delete_confirm": "Are you sure you want to delete this work?",
+    "delete_success": "Work deleted successfully",
+    "delete_error": "Error deleting work",
+    "edit": "Edit work",
+    "edit_success": "Work edited successfully",
+    "subTasks": "Subtasks",
+    "available_services": "Available services",
+    "structure": "Structure"
+  },
+  "services": {
+    "title": "Services",
+    "part": "Part",
+    "name": "Name",
+    "actions": "Actions",
+    "add": "Add service",
+    "id": "ID"
   }
 }

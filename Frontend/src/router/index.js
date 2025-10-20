@@ -8,6 +8,8 @@ import HomeView from "../views/HomeView.vue";
 const LoginView = () => import("../views/LoginView.vue");
 const BoatListView = () => import("../views/BoatListView.vue");
 const BoatDetailsView = () => import("../views/BoatDetailsView.vue");
+const ServicesListView = () => import("../views/ServicesListView.vue");
+const DashboardView = () => import("../views/DashboardView.vue");
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -35,6 +37,18 @@ const routes = [
         name: "BoatDetails",
         component: BoatDetailsView,
         meta: { title: "Boat Details" },
+      },
+      {
+        path: "/services",
+        name: "Services",
+        component: ServicesListView,
+        meta: { title: "Services" },
+      },
+      {
+        path: "/dashboard",
+        name: "Dashboard",
+        component: DashboardView,
+        meta: { title: "Dashboard" },
       },
       // {
       //   path: "settings",

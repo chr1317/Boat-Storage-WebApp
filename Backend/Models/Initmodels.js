@@ -74,6 +74,10 @@ function initModels(sequelize) {
 
   Work.belongsTo(User, { foreignKey: "UID", onDelete: "SET NULL", onUpdate: "CASCADE" });
   User.hasMany(Work, { foreignKey: "UID" });
+  
+  Work.hasMany(Work, { as: "subtasks", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  Work.belongsTo(Work, { as: "parent", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+
 
   return {
     Boats,

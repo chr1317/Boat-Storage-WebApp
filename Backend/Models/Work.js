@@ -38,6 +38,15 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM("InProgress", "Done", "ToDo"),
       allowNull: false,
       defaultValue: "ToDo"
+    },
+    parentWID: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: "work",
+        key: "WID"
+      },
+      onDelete: "CASCADE"
     }
   }, {
     tableName: "work",

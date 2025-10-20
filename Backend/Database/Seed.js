@@ -19,7 +19,6 @@ function seasonDates() {
 }
 
 async function ensureUniqueIndexBoatStorage() {
-  // bezpiecznie doda unikatowy indeks jeśli go nie ma
   const [rows] = await sequelize.query(`
     SELECT 1 FROM information_schema.statistics
     WHERE table_schema = DATABASE()
@@ -43,7 +42,7 @@ async function seed(force = false) {
 
   await ensureUniqueIndexBoatStorage();
 
-  // User
+  // 👤 Users
   const admin = await models.User.create({
     Name: 'admin',
     Password: await bcrypt.hash('Secret123!', 10),
@@ -66,7 +65,7 @@ async function seed(force = false) {
     PhoneNr: '123456789',
   });
 
-  // Season
+  // 🌊 Season
   const s = seasonDates();
   const season = await models.Seasons.create({
     year_start: s.yStart,
@@ -75,7 +74,7 @@ async function seed(force = false) {
     endDate: s.end_date,
   });
 
-  // Boathall
+  // 🏠 Hall
   const hall = await models.Boathalls.create({
     Length: 2000,
     Width: 2000,
@@ -83,7 +82,7 @@ async function seed(force = false) {
     MarginCM: DEFAULT_HALL_MARGIN_CM,
   });
 
-  // Services
+  // 🧰 Services
   const services = await models.Services.bulkCreate([
     { Part: 'General', Name: 'Problem (Generic)' },
     { Part: 'Hull', Name: 'Hull washing' },
@@ -92,7 +91,7 @@ async function seed(force = false) {
     { Part: 'Deck', Name: 'Teak cleaning' },
   ]);
 
-  // Boats
+  // 🚤 Boats
   const boat1 = await models.Boats.create({
     UID: client.UID,
     name: 'Aurora',
@@ -114,7 +113,7 @@ async function seed(force = false) {
     QR: 'QR-BALTIC',
   });
 
-  // Engine info
+  // ⚙️ Engine info
   await models.EngineInformation.create({
     BID: boat1.BID,
     Model: 'D3',
@@ -146,7 +145,7 @@ async function seed(force = false) {
     Moto_H: 60,
   });
 
-  // Dimensions
+  // 📏 Dimensions
   const dim1 = await models.BoatDimensions.create({
     BID: boat1.BID,
     Length: 650,
@@ -170,57 +169,71 @@ async function seed(force = false) {
     T_Color: 'Teak',
   });
 
-  // Storage
+  // 🗄️ Storage
   await models.BoatStorage.create({
     BID: boat1.BID,
     seasonID: season.seasonID,
     IsComing: true,
-    ArrivalDate: null,
-    Budget: null,
   });
   await models.BoatStorage.create({
     BID: boat2.BID,
     seasonID: season.seasonID,
     IsComing: true,
-    ArrivalDate: null,
     Budget: 15000,
   });
 
-  // Problems
-  await models.Problems.create({
-    BID: boat1.BID,
-    WID: null,
-    Description: 'Oil leak spotted under engine',
-    Type: 'Issue',
-    Status: 'New',
-    CreatedAt: new Date(),
-  });
-  const prob2 = await models.Problems.create({
-    BID: boat2.BID,
-    WID: null,
-    Description: 'Client requested teak cleaning',
-    Type: 'ClientRequest',
-    Status: 'New',
-    CreatedAt: new Date(),
-  });
-
-  // Work from problem 2
+  // ⚠️ Problem & Work example
   const teakService = services.find((s) => s.Name === 'Teak cleaning');
-  const work2 = await models.Work.create({
-    SID: teakService.SID,
-    BID: boat2.BID,
-    UID: employee.UID,
-    Date: new Date(),
-    seasonID: season.seasonID,
-    HR: 0,
-    Comment: 'From problem: teak cleaning',
-    State: 'ToDo',
-  });
-  prob2.WID = work2.WID;
-  prob2.Status = 'InProgress';
-  await prob2.save();
+  const engineService = services.find((s) => s.Name === 'Oil change');
+  const impellerService = services.find((s) => s.Name === 'Impeller replacement');
 
-  // One manual position for boat1 at (0,0) with padded dims
+  // główna praca
+  const mainWork = await models.Work.create({
+    SID: engineService.SID,
+    BID: boat1.BID,
+    UID: employee.UID,
+    Date: new Date(), // data rozpoczęcia
+    seasonID: season.seasonID,
+    HR: 4,
+    Comment: 'Engine maintenance package',
+    State: 'InProgress',
+  });
+
+  // podprace (subtasks)
+  const now = new Date();
+  const sub1 = await models.Work.create({
+    SID: engineService.SID,
+    BID: boat1.BID,
+    Date: new Date(now.getTime() - 1000 * 60 * 60), // 1h wcześniej
+    seasonID: season.seasonID,
+    Comment: 'Oil change',
+    State: 'Done',
+    parentWID: mainWork.WID,
+  });
+
+  const sub2 = await models.Work.create({
+    SID: impellerService.SID,
+    BID: boat1.BID,
+    Date: now,
+    seasonID: season.seasonID,
+    Comment: 'Impeller replacement',
+    State: 'Done',
+    parentWID: mainWork.WID,
+  });
+
+  // jeśli wszystkie podprace Done → główna też Done
+  const allSubtasks = [sub1, sub2];
+  if (allSubtasks.every((s) => s.State === 'Done')) {
+    const latest = allSubtasks.reduce(
+      (max, s) => (s.Date > max ? s.Date : max),
+      allSubtasks[0].Date
+    );
+    mainWork.State = 'Done';
+    mainWork.Date = latest; // data zakończenia
+    await mainWork.save();
+  }
+
+  // 🧩 Position
   const margin = hall.MarginCM || DEFAULT_HALL_MARGIN_CM;
   await models.BoatPosition.create({
     BHID: hall.BHID,
@@ -231,7 +244,7 @@ async function seed(force = false) {
     Width: (dim1.Width || 0) + margin,
   });
 
-  console.log('✅ Seed complete.');
+  console.log('✅ Seed complete (with subtasks & completion logic).');
 }
 
 module.exports = { seed };

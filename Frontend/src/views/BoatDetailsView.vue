@@ -49,7 +49,21 @@
         </div>
       </template>
     </Card>
+    <!-- Qr dialog -->
+    <div v-if="isAdmin && boat" class="flex justify-end mt-4">
+    <Button
+      icon="pi pi-qrcode"
+      label="Generate QR Code"
+      outlined
+      severity="info"
+      @click="showQRDialog = true"
+    />
+  </div>
 
+  <BoatQRDialog
+    v-model:visible="showQRDialog"
+    :boat="boat"
+  />
     <!-- Tabs -->
     <TabView v-if="boat" v-model:activeIndex="activeTab" class="mt-4">
       <TabPanel :header="t('boat.info_tab')">
@@ -72,16 +86,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
+import { useAuthStore } from "../stores/auth";
+
 
 // Zakładki
 import BoatInfoTab from "../components/Boat/BoatInfoTab.vue";
 import BoatEngineTab from "../components/Boat/BoatEngineTab.vue";
 import BoatServiceTab from "../components/Boat/BoatServiceTab.vue";
 import BoatProblemsTab from "../components/Boat/BoatProblemsTab.vue";
+import BoatQRDialog from "../components/Boat/BoatQRDialog.vue";
 
 // Serwis API
 import { getBoatById, getBoatByQR } from "../services/boatService";
@@ -94,6 +111,7 @@ const boat = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const activeTab = ref(0);
+const auth = useAuthStore();
 
 onMounted(async () => {
   try {
@@ -119,4 +137,6 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+const isAdmin = computed(() => auth.user?.Role === "Admin");
+const showQRDialog = ref(false);
 </script>

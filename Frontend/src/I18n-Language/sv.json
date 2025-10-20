@@ -1,14 +1,21 @@
 {
   "app": {
     "title": "BoatHall - Hallhantering",
-    "language": "Språk"
+    "language": "Språk",
+    "theme": "Dark mode",
+    "settings": "Inställningar"
+  },
+  "common": {
+    "edit": "Redigera",
+    "delete": "Ta bort"
   },
   "routes": {
     "Dashboard": "Instrumentpanel",
     "Settings": "Inställningar",
     "Login": "Inloggningssida",
     "Boats": "Båtar",
-    "BoatDetails": "Båt detaljer"
+    "BoatDetails": "Båt detaljer",
+    "Services": "Tjänster"
   },
 "login": {
     "email": "E-post",
@@ -34,6 +41,31 @@
     "service_tab": "Arbete",
     "works_title": "Arbetsuppgifter",
     "problems_tab": "Problemer",
-    "no_works": "Inga arbeter finns"
+    "no_works": "Inga arbeter finns",
+    "service": "Service",
+    "part": "Del",
+    "date": "Datum",
+    "worker": "Arbetare",
+    "hours": "Timmar",
+    "comment": "Kommentar",
+    "status": "Status",
+    "addWork": "Lägg till arbete",
+    "changeState": "Byt arbetsstatus",
+    "delete": "Ta bort arbete",
+    "delete_confirm": "Är du säker på att du vill ta bort detta arbete?",
+    "delete_success": "Arbete borttaget",
+    "delete_error": "Fel vid borttagning av arbete",
+    "edit": "Redigera arbete",
+    "edit_success": "Arbete redigerat",
+    "actions": "Aktioner",
+    "subTasks": "Underuppgifter"
+  },
+  "services": {
+    "title": "Tjänster",
+    "part": "Del",
+    "name": "Namn",
+    "actions": "Aktioner",
+    "add": "Lagg till tjänst",
+    "id": "ID"
   }
 }

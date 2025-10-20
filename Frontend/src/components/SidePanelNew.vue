@@ -20,24 +20,38 @@
       <div class="flex flex-col h-full">
         <!-- NAV -->
         <nav class="flex flex-col px-4 pt-6 gap-2 flex-1">
-          <a
-            class="flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+          <RouterLink
+            to="/dashboard"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/dashboard') }"
           >
-            <i class="pi pi-home text-lg"></i>
-            <!-- ✅ tłumaczenie przez {{ }} -->
+            <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.Dashboard') }}</span>
-          </a>
+          </RouterLink>
           <!-- Boats -->
           <RouterLink
             v-if="['Admin', 'Employee'].includes(auth.role)"
             to="/boats"
+            @click="$emit('close')"
             class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
             :class="{ active: route.path.startsWith('/boats') }"
           >
             <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.Boats') }}</span>
           </RouterLink>
-
+          <!-- Services -->
+          <RouterLink
+            v-if="['Admin', 'Employee'].includes(auth.role)"
+            to="/services"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/services') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Services') }}</span>
+          </RouterLink>
+          
           <a
             class="flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
           >

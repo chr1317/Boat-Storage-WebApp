@@ -11,15 +11,15 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     name: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(100),
       allowNull: false
     },
     HIN: {
-      type: DataTypes.STRING(30),
+      type: DataTypes.STRING(50),
       allowNull: false
     },
     Type: {
-      type: DataTypes.STRING(15),
+      type: DataTypes.STRING(50),
       allowNull: false
     },
     out: {
@@ -31,7 +31,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     Drive: {
-      type: DataTypes.STRING(6),
+      type: DataTypes.STRING(30),
       allowNull: false
     },
     QR: {

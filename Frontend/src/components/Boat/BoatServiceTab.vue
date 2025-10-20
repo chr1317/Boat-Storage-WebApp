@@ -7,7 +7,7 @@
       <Button
         v-if="isAdminOrEmployee"
         icon="pi pi-plus"
-        label="Add work"
+        :label="t('boat.addWork')"
         severity="primary"
         @click="openCreateDialog"
       />
@@ -22,22 +22,32 @@
       class="p-datatable-sm"
       :loading="loading"
       v-if="works.length > 0"
+      v-model:expandedRows="expandedRows"
     >
-      <Column field="Service.Name" header="Service" sortable />
-      <Column field="Service.Part" header="Part" />
-      <Column field="User.Name" header="Worker" />
-      <Column field="Date" header="Date">
+      <Column expander style="width: 3rem" />
+      <Column field="Service.Name" :header="t('boat.service')" sortable />
+      <Column field="Service.Part" :header="t('boat.part')" />
+      <Column field="User.Name" :header="t('boat.worker')">
+        <template #body="{ data }">
+          <span v-if="!data.parentWID">{{ data.User?.Name || '—' }}</span>
+        </template>
+      </Column>
+      <Column field="Date" :header="t('boat.date')">
         <template #body="{ data }">{{ formatDate(data.Date) }}</template>
       </Column>
-      <Column field="HR" header="Hours" />
-      <Column field="Comment" header="Comment" />
-      <Column field="State" header="Status">
+      <Column field="HR" :header="t('boat.hours')">
+        <template #body="{ data }">
+          <span v-if="!data.parentWID">{{ data.HR || '—' }}</span>
+        </template>
+      </Column>
+      <Column field="Comment" :header="t('boat.comment')" />
+      <Column field="State" :header="t('boat.status')">
         <template #body="{ data }">
           <Tag :value="data.State" :severity="getStateColor(data.State)" />
         </template>
       </Column>
 
-      <Column v-if="isAdminOrEmployee" header="Actions" style="width: 8rem">
+      <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 8rem">
         <template #body="{ data }">
           <div class="flex gap-2 justify-center">
             <Button
@@ -46,7 +56,7 @@
               outlined
               size="small"
               severity="info"
-              v-tooltip.bottom="'Change state'"
+              v-tooltip.bottom="t('boat.changeState')"
               @click="openStateDialog(data)"
             />
             <Button
@@ -55,12 +65,65 @@
               outlined
               size="small"
               severity="danger"
-              v-tooltip.bottom="'Delete'"
+              v-tooltip.bottom="t('boat.delete')"
               @click="handleDeleteWork(data.WID)"
             />
           </div>
         </template>
       </Column>
+
+      <!-- ✅ Expansion slot (wewnątrz DataTable!) -->
+      <template #expansion="{ data }">
+  <div v-if="data.subtasks?.length" class="p-3 bg-gray-50 rounded">
+    <h4 class="text-sm font-semibold mb-2">{{ t('boat.subTasks') }}</h4>
+
+    <DataTable :value="data.subtasks" size="small">
+      <Column field="Service.Name" :header="t('boat.service')" />
+      <Column field="Comment" :header="t('boat.comment')" />
+
+      <!-- 🔹 Dodajemy kolumnę z datą wykonania -->
+      <Column field="Date" :header="t('boat.date')">
+        <template #body="{ data }">
+          {{ data.Date ? formatDate(data.Date) : '—' }}
+        </template>
+      </Column>
+
+      <Column field="State" :header="t('boat.status')">
+        <template #body="{ data }">
+          <Tag :value="data.State" :severity="getStateColor(data.State)" />
+        </template>
+      </Column>
+
+      <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 6rem">
+        <template #body="{ data }">
+          <div class="flex justify-center gap-2">
+            <Button
+              icon="pi pi-refresh"
+              rounded
+              text
+              size="small"
+              @click="openStateDialog(data)"
+              v-tooltip.bottom="t('boat.changeState')"
+            />
+            <Button
+              icon="pi pi-trash"
+              rounded
+              text
+              size="small"
+              severity="danger"
+              @click="handleDeleteWork(data.WID)"
+              v-tooltip.bottom="t('boat.delete')"
+            />
+          </div>
+        </template>
+      </Column>
+    </DataTable>
+  </div>
+
+  <div v-else class="text-center text-gray-400 italic py-2">
+    No subtasks
+  </div>
+</template>
     </DataTable>
 
     <!-- Empty state -->
@@ -91,6 +154,13 @@
       </div>
     </Dialog>
   </div>
+  <BoatAddWorkDialog
+  v-model:visible="addNewWorkDialogVisible"
+  :boat-id="route.params.id"
+  :season-id="works[0]?.seasonID || 1"
+  :user-id="auth.user.UID"
+  @created="fetchWorks"
+  />
 </template>
 
 <script setup>
@@ -99,17 +169,8 @@ import { useRoute } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
 import { useI18n } from "vue-i18n";
 import { useToast } from "primevue/usetoast";
-
-// PrimeVue
-import Button from "primevue/button";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Dialog from "primevue/dialog";
-import Dropdown from "primevue/dropdown";
-import Tag from "primevue/tag";
-
-// API service
 import { getWorks, updateWorkState, deleteWork } from "../../services/workService";
+import BoatAddWorkDialog from "./BoatAddWorkDialog.vue";
 
 const { t } = useI18n({ useScope: "global" });
 const route = useRoute();
@@ -121,6 +182,7 @@ const loading = ref(true);
 const stateDialogVisible = ref(false);
 const selectedWork = ref(null);
 const selectedState = ref(null);
+const expandedRows = ref([]);
 
 const isAdminOrEmployee = computed(() =>
   ["Admin", "Employee"].includes(auth.user?.Role)
@@ -139,6 +201,7 @@ async function fetchWorks() {
     loading.value = true;
     const boatId = route.params.id;
     works.value = await getWorks(boatId);
+    expandedRows.value = works.value.filter((w) => w.subtasks?.length);
   } catch (err) {
     toast.add({
       severity: "error",

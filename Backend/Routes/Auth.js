@@ -60,6 +60,14 @@ router.post("/login", async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Incorrect email or password" });
     }
+    
+    if (user.MustChangePassword) {
+      return res.status(403).json({
+        error: "Temporary password. You must change it before logging in.",
+        mustChangePassword: true,
+        userId: user.UID,
+      });
+    }
 
     const token = jwt.sign(
       { id: user.UID, role: user.Role },

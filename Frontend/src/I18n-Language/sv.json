@@ -7,7 +7,8 @@
   },
   "common": {
     "edit": "Redigera",
-    "delete": "Ta bort"
+    "delete": "Ta bort",
+    "loading": "Laddar..."
   },
   "routes": {
     "Dashboard": "Instrumentpanel",
@@ -15,7 +16,8 @@
     "Login": "Inloggningssida",
     "Boats": "Båtar",
     "BoatDetails": "Båt detaljer",
-    "Services": "Tjänster"
+    "Services": "Tjänster",
+    "Users": "Användare"
   },
 "login": {
     "email": "E-post",
@@ -58,7 +60,11 @@
     "edit": "Redigera arbete",
     "edit_success": "Arbete redigerat",
     "actions": "Aktioner",
-    "subTasks": "Underuppgifter"
+    "subTasks": "Underuppgifter",
+    "available_services": "Tillgängliga tjänster",
+    "structure": "Struktur",
+    "select_service": "Välj tjänst",
+    "add_service": "Lägg till tjänst"
   },
   "services": {
     "title": "Tjänster",
@@ -67,5 +73,14 @@
     "actions": "Aktioner",
     "add": "Lagg till tjänst",
     "id": "ID"
+  },
+  "users": {
+    "title": "Användare",
+    "name": "Namn",
+    "lastname": "Efternamn",
+    "email": "E-post",
+    "phone": "Telefonnummer",
+    "role": "Roll",
+    "actions": "Aktioner"
   }
 }

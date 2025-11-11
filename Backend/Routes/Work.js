@@ -76,12 +76,24 @@ router.get("/", auth(["Admin", "Employee"]), async (req, res) => {
         {
           model: models.Work,
           as: "subtasks",
-          include: [{ model: models.Services }],
+          include: [
+            { model: models.Services, attributes: ["SID", "Name", "Part"] },
+            { model: models.User, as: "User", attributes: ["UID", "Name"] },
+          ],
         },
-        { model: models.Boats, include: [{ model: models.User, attributes: { exclude: ["Password"] } }] },
-        { model: models.Services },
-        { model: models.User, as: "User" },
-        { model: models.Seasons },
+        { model: models.Services, attributes: ["SID", "Name", "Part"] },
+        { model: models.User, as: "User", attributes: ["UID", "Name"] },
+        {
+          model: models.Boats,
+          attributes: ["BID", "name", "HIN", "Type", "Drive", "QR"],
+          include: [
+            { model: models.User, attributes: ["UID", "Name", "PhoneNr", "Email"] },
+          ],
+        },
+        {
+          model: models.Seasons,
+          attributes: ["seasonID", "year_start", "year_end", "startDate", "endDate"],
+        },
       ],
     });
 
@@ -100,7 +112,7 @@ router.get("/boat/:bid", auth(["Admin", "Employee", "Client"]), async (req, res)
     if (isNaN(boatId)) return res.status(400).json({ error: "Invalid boat id" });
 
     const boat = await models.Boats.findByPk(boatId, {
-      include: [{ model: models.User }],
+      include: [{ model: models.User, attributes: ["UID", "Name", "Role"] }],
     });
     if (!boat) return res.status(404).json({ error: "Boat not found" });
 
@@ -111,13 +123,23 @@ router.get("/boat/:bid", auth(["Admin", "Employee", "Client"]), async (req, res)
 
     const works = await models.Work.findAll({
       where: { BID: boatId, parentWID: null },
-      include: [
-        { model: models.Work, as: "subtasks" },
-        { model: models.Services },
-        { model: models.User, as: "User" },
-        { model: models.Seasons },
-      ],
       order: [["WID", "ASC"]],
+      include: [
+        {
+          model: models.Work,
+          as: "subtasks",
+          include: [
+            { model: models.Services, attributes: ["SID", "Name", "Part"] },
+            { model: models.User, as: "User", attributes: ["UID", "Name"] },
+          ],
+        },
+        { model: models.Services, attributes: ["SID", "Name", "Part"] },
+        { model: models.User, as: "User", attributes: ["UID", "Name"] },
+        {
+          model: models.Seasons,
+          attributes: ["seasonID", "year_start", "year_end", "startDate", "endDate"],
+        },
+      ],
     });
 
     res.json(works);
@@ -126,6 +148,7 @@ router.get("/boat/:bid", auth(["Admin", "Employee", "Client"]), async (req, res)
     res.status(500).json({ error: "Server error while listing boat works" });
   }
 });
+
 
 /** UPDATE STATE: PUT /work/:id/state (Admin/Employee) */
 router.put("/:id/state", auth(["Admin", "Employee"]), async (req, res) => {
@@ -139,21 +162,17 @@ router.put("/:id/state", auth(["Admin", "Employee"]), async (req, res) => {
     if (!rec) throw new Error("Work not found");
 
     rec.State = State;
-    rec.Date = new Date(); // data zmiany stanu = data wykonania
+    rec.Date = new Date();
     await rec.save({ transaction: t });
 
-    // 🔹 jeśli to podpraca
     if (rec.parentWID) {
-      // sprawdź wszystkie podprace
       const subtasks = await models.Work.findAll({
         where: { parentWID: rec.parentWID },
         transaction: t,
       });
 
-      // czy wszystkie są Done
       const allDone = subtasks.every((s) => s.State === "Done");
       if (allDone) {
-        // ustaw główną jako Done z najpóźniejszą datą
         const parent = await models.Work.findByPk(rec.parentWID, { transaction: t });
         if (parent) {
           const latestDate = subtasks.reduce(
@@ -167,7 +186,6 @@ router.put("/:id/state", auth(["Admin", "Employee"]), async (req, res) => {
       }
     }
 
-    // 🔹 jeśli to praca główna i oznaczona jako Done → ustaw datę
     if (!rec.parentWID && State === "Done") {
       rec.Date = new Date();
       await rec.save({ transaction: t });

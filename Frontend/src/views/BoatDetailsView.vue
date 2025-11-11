@@ -50,7 +50,7 @@
       </template>
     </Card>
     <!-- Qr dialog -->
-    <div v-if="isAdmin && boat" class="flex justify-end mt-4">
+    <div v-if="isAdmin && boat && !isMobile" class="flex justify-end mt-4">
     <Button
       icon="pi pi-qrcode"
       label="Generate QR Code"
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
@@ -107,11 +107,33 @@ const route = useRoute();
 const toast = useToast();
 const { t } = useI18n({ useScope: "global" });
 
+const tabIndexMap = {
+  info: 0,
+  engine: 1,
+  service: 2,
+  problems: 3,
+};
+
 const boat = ref(null);
 const loading = ref(true);
 const error = ref(null);
 const activeTab = ref(0);
 const auth = useAuthStore();
+
+const width = ref(window.innerWidth);
+const isMobile = computed(() => width.value < 768);
+
+function handleResize() {
+  width.value = window.innerWidth;
+}
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
 
 onMounted(async () => {
   try {
@@ -137,6 +159,15 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    activeTab.value = tabIndexMap[tab] ?? 0;
+  },
+  { immediate: true }
+);
+
 const isAdmin = computed(() => auth.user?.Role === "Admin");
 const showQRDialog = ref(false);
 </script>

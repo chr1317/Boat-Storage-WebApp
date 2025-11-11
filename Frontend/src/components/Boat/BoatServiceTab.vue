@@ -51,6 +51,25 @@
         <template #body="{ data }">
           <div class="flex gap-2 justify-center">
             <Button
+              icon="pi pi-pencil"
+              rounded
+              outlined
+              size="small"
+              severity="secondary"
+              v-tooltip.bottom="t('boat.edit')"
+              @click="openEditDialog(data)"
+            />
+            <Button
+              icon="pi pi-plus"
+              rounded
+              outlined
+              size="small"
+              severity="success"
+              v-tooltip.bottom="t('boat.add_subtask')"
+              v-if="!data.parentWID"
+              @click="openAddSubtaskDialog(data)"
+            />
+            <Button
               icon="pi pi-refresh"
               rounded
               outlined
@@ -72,58 +91,54 @@
         </template>
       </Column>
 
-      <!-- ✅ Expansion slot (wewnątrz DataTable!) -->
+      <!-- ✅ Expansion slot (subtasks) -->
       <template #expansion="{ data }">
-  <div v-if="data.subtasks?.length" class="p-3 bg-gray-50 rounded">
-    <h4 class="text-sm font-semibold mb-2">{{ t('boat.subTasks') }}</h4>
+        <div v-if="data.subtasks?.length" class="p-3 bg-gray-50 rounded">
+          <h4 class="text-sm font-semibold mb-2">{{ t('boat.subTasks') }}</h4>
 
-    <DataTable :value="data.subtasks" size="small">
-      <Column field="Service.Name" :header="t('boat.service')" />
-      <Column field="Comment" :header="t('boat.comment')" />
+          <DataTable :value="data.subtasks" size="small">
+            <Column field="Service.Name" :header="t('boat.service')" />
+            <Column field="Comment" :header="t('boat.comment')" />
+            <Column field="Date" :header="t('boat.date')">
+              <template #body="{ data }">
+                {{ data.Date ? formatDate(data.Date) : '—' }}
+              </template>
+            </Column>
+            <Column field="State" :header="t('boat.status')">
+              <template #body="{ data }">
+                <Tag :value="data.State" :severity="getStateColor(data.State)" />
+              </template>
+            </Column>
+            <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 6rem">
+              <template #body="{ data }">
+                <div class="flex justify-center gap-2">
+                  <Button
+                    icon="pi pi-refresh"
+                    rounded
+                    text
+                    size="small"
+                    @click="openStateDialog(data)"
+                    v-tooltip.bottom="t('boat.changeState')"
+                  />
+                  <Button
+                    icon="pi pi-trash"
+                    rounded
+                    text
+                    size="small"
+                    severity="danger"
+                    @click="handleDeleteWork(data.WID)"
+                    v-tooltip.bottom="t('boat.delete')"
+                  />
+                </div>
+              </template>
+            </Column>
+          </DataTable>
+        </div>
 
-      <!-- 🔹 Dodajemy kolumnę z datą wykonania -->
-      <Column field="Date" :header="t('boat.date')">
-        <template #body="{ data }">
-          {{ data.Date ? formatDate(data.Date) : '—' }}
-        </template>
-      </Column>
-
-      <Column field="State" :header="t('boat.status')">
-        <template #body="{ data }">
-          <Tag :value="data.State" :severity="getStateColor(data.State)" />
-        </template>
-      </Column>
-
-      <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 6rem">
-        <template #body="{ data }">
-          <div class="flex justify-center gap-2">
-            <Button
-              icon="pi pi-refresh"
-              rounded
-              text
-              size="small"
-              @click="openStateDialog(data)"
-              v-tooltip.bottom="t('boat.changeState')"
-            />
-            <Button
-              icon="pi pi-trash"
-              rounded
-              text
-              size="small"
-              severity="danger"
-              @click="handleDeleteWork(data.WID)"
-              v-tooltip.bottom="t('boat.delete')"
-            />
-          </div>
-        </template>
-      </Column>
-    </DataTable>
-  </div>
-
-  <div v-else class="text-center text-gray-400 italic py-2">
-    No subtasks
-  </div>
-</template>
+        <div v-else class="text-center text-gray-400 italic py-2">
+          No subtasks
+        </div>
+      </template>
     </DataTable>
 
     <!-- Empty state -->
@@ -153,14 +168,72 @@
         </div>
       </div>
     </Dialog>
+
+    <!-- Add Work Dialog -->
+    <BoatAddWorkDialog
+      v-model:visible="addNewWorkDialogVisible"
+      :boat-id="route.params.id"
+      :season-id="works[0]?.seasonID || 1"
+      :user-id="auth.user.UID"
+      @created="fetchWorks"
+    />
+
+    <!-- Edit Work Dialog -->
+    <Dialog
+      v-model:visible="editWorkDialogVisible"
+      modal
+      header="Edit Work"
+      :style="{ width: '500px' }"
+    >
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="font-semibold block mb-1">Comment</label>
+          <InputText v-model="selectedWorkForEdit.Comment" class="w-full" />
+        </div>
+        <div>
+          <label class="font-semibold block mb-1">Hours</label>
+          <InputNumber v-model="selectedWorkForEdit.HR" class="w-full" />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" outlined @click="editWorkDialogVisible = false" />
+        <Button label="Save" @click="saveEditedWork" />
+      </template>
+    </Dialog>
+
+    <!-- Add Subtask Dialog -->
+    <Dialog
+      v-model:visible="addSubtaskDialogVisible"
+      modal
+      header="Add Subtask"
+      :style="{ width: '500px' }"
+    >
+      <div class="flex flex-col gap-3">
+        <div>
+          <label class="font-semibold block mb-1">Service</label>
+          <Dropdown
+            v-model="selectedServiceForSubtask"
+            :options="services"
+            optionLabel="Name"
+            optionValue="SID"
+            placeholder="Select service"
+            filter
+            class="w-full"
+          />
+        </div>
+        <div>
+          <label class="font-semibold block mb-1">Comment</label>
+          <InputText v-model="subtaskComment" class="w-full" />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Cancel" outlined @click="addSubtaskDialogVisible = false" />
+        <Button label="Add" @click="saveSubtask" :disabled="!selectedServiceForSubtask" />
+      </template>
+    </Dialog>
   </div>
-  <BoatAddWorkDialog
-  v-model:visible="addNewWorkDialogVisible"
-  :boat-id="route.params.id"
-  :season-id="works[0]?.seasonID || 1"
-  :user-id="auth.user.UID"
-  @created="fetchWorks"
-  />
 </template>
 
 <script setup>
@@ -169,7 +242,8 @@ import { useRoute } from "vue-router";
 import { useAuthStore } from "../../stores/auth";
 import { useI18n } from "vue-i18n";
 import { useToast } from "primevue/usetoast";
-import { getWorks, updateWorkState, deleteWork } from "../../services/workService";
+import { createWork, getWorks, updateWork, updateWorkState, deleteWork } from "../../services/workService";
+import { getServices } from "../../services/serviceService";
 import BoatAddWorkDialog from "./BoatAddWorkDialog.vue";
 
 const { t } = useI18n({ useScope: "global" });
@@ -183,6 +257,15 @@ const stateDialogVisible = ref(false);
 const selectedWork = ref(null);
 const selectedState = ref(null);
 const expandedRows = ref([]);
+const addNewWorkDialogVisible = ref(false);
+const editWorkDialogVisible = ref(false);
+const addSubtaskDialogVisible = ref(false);
+const selectedWorkForEdit = ref(null);
+const selectedWorkForSubtask = ref(null);
+
+const services = ref([]);
+const selectedServiceForSubtask = ref(null);
+const subtaskComment = ref("");
 
 const isAdminOrEmployee = computed(() =>
   ["Admin", "Employee"].includes(auth.user?.Role)
@@ -194,7 +277,14 @@ const stateOptions = [
   { label: "Done", value: "Done" },
 ];
 
-onMounted(fetchWorks);
+onMounted(async () => {
+  await fetchWorks();
+  try {
+    services.value = await getServices();
+  } catch (err) {
+    console.error("Failed to load services", err);
+  }
+});
 
 async function fetchWorks() {
   try {
@@ -215,19 +305,15 @@ async function fetchWorks() {
 }
 
 function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString();
+  return dateStr ? new Date(dateStr).toLocaleDateString() : "—";
 }
 
 function getStateColor(state) {
   switch (state) {
-    case "Done":
-      return "success";
-    case "InProgress":
-      return "info";
-    case "ToDo":
-      return "warning";
-    default:
-      return null;
+    case "Done": return "success";
+    case "InProgress": return "info";
+    case "ToDo": return "warning";
+    default: return null;
   }
 }
 
@@ -260,11 +346,51 @@ async function handleDeleteWork(id) {
 }
 
 function openCreateDialog() {
-  toast.add({
-    severity: "info",
-    summary: "Create work",
-    detail: "This will open a create form (to be implemented)",
-    life: 3000,
-  });
+  addNewWorkDialogVisible.value = true;
+}
+
+function openEditDialog(work) {
+  selectedWorkForEdit.value = { ...work };
+  editWorkDialogVisible.value = true;
+}
+
+async function saveEditedWork() {
+  try {
+    await updateWork(selectedWorkForEdit.value.WID, {
+      Comment: selectedWorkForEdit.value.Comment,
+      HR: selectedWorkForEdit.value.HR,
+    });
+    toast.add({ severity: "success", summary: "Work updated", life: 2000 });
+    editWorkDialogVisible.value = false;
+    await fetchWorks();
+  } catch {
+    toast.add({ severity: "error", summary: "Failed to update work", life: 3000 });
+  }
+}
+
+function openAddSubtaskDialog(work) {
+  selectedWorkForSubtask.value = work;
+  addSubtaskDialogVisible.value = true;
+}
+
+async function saveSubtask() {
+  try {
+    await createWork({
+      SID: selectedServiceForSubtask.value,
+      BID: route.params.id,
+      seasonID: works.value[0]?.seasonID || 1,
+      UID: auth.user.UID,
+      parentWID: selectedWorkForSubtask.value.WID,
+      Comment: subtaskComment.value || "Subtask",
+      State: "ToDo",
+    });
+    toast.add({ severity: "success", summary: "Subtask added", life: 2000 });
+    addSubtaskDialogVisible.value = false;
+    selectedServiceForSubtask.value = null;
+    subtaskComment.value = "";
+    await fetchWorks();
+  } catch {
+    toast.add({ severity: "error", summary: "Failed to add subtask", life: 3000 });
+  }
 }
 </script>

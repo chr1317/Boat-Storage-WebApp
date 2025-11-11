@@ -93,30 +93,46 @@ watch(locale, async () => {
 
 async function HandleLogin(values) {
   try {
-    await auth.login({
+    const res = await auth.login({
       Email: values.states.email.value,
       Password: values.states.password.value,
     });
 
+    // 🟠 Jeśli hasło tymczasowe — przekieruj do zmiany
+    if (res.mustChangePassword) {
+      toast.add({
+        severity: "warn",
+        summary: "Change required",
+        detail: "You must set a new password before logging in.",
+        life: 3000,
+      });
+
+      router.push({
+        name: "SetPassword",
+        query: { uid: res.userId },
+      });
+      return;
+    }
+
+    // ✅ normalny login
     toast.add({
-      severity: 'success',
-      summary: 'Login successful',
-      detail: t('login.login_success'),
+      severity: "success",
+      summary: "Login successful",
+      detail: t("login.login_success"),
       life: 3000,
     });
 
-    // 🔥 obsługa redirectu (jeśli np. przyszedł z QR)
-    const redirect = router.currentRoute.value.query.redirect || "/home";
+    const redirect = router.currentRoute.value.query.redirect || "/dashboard";
     router.push(redirect);
-
   } catch (err) {
     toast.add({
-      severity: 'error',
-      summary: 'Login failed',
-      detail: t('login.login_error') + ': ' + err.message,
+      severity: "error",
+      summary: "Login failed",
+      detail: t("login.login_error") + ": " + err.message,
       life: 3000,
     });
   }
 }
+
 </script>
 

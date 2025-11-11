@@ -49,7 +49,12 @@ module.exports = (sequelize, DataTypes) => {
     Role: {
       type: DataTypes.ENUM("Admin", "Employee", "Client"),
       allowNull: false
-    }
+    },
+    MustChangePassword: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
   }, {
     tableName: "users",
     timestamps: false

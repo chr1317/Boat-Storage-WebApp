@@ -12,6 +12,16 @@ export async function apiFetch(endpoint, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
+  // 🔹 SPECJALNA OBSŁUGA 403 mustChangePassword
+  if (res.status === 403) {
+    try {
+      const data = await res.json();
+      if (data.mustChangePassword) {
+        return data; // ✅ nie rzucamy błędem
+      }
+    } catch {}
+  }
+
   if (!res.ok) {
     let message = `Error ${res.status}`;
     try {

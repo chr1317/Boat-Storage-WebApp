@@ -10,6 +10,9 @@ const BoatListView = () => import("../views/BoatListView.vue");
 const BoatDetailsView = () => import("../views/BoatDetailsView.vue");
 const ServicesListView = () => import("../views/ServicesListView.vue");
 const DashboardView = () => import("../views/DashboardView.vue");
+const BoatRedirectByQR = () => import("../components/Boat/BoatRedirectByQR.vue");
+const UserListView = () => import("../views/UserListView.vue");
+const SetPasswordView = () => import("../views/SetPasswordView.vue");
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -18,6 +21,17 @@ const routes = [
     path: "/login",
     name: "Login",
     component: LoginView,
+  },
+
+  {
+    path: "/qr/:qr",
+    name: "BoatRedirectByQR.vie",
+    component: BoatRedirectByQR,
+  },
+  {
+    path: "/set-password",
+    name: "SetPassword",
+    component: SetPasswordView,
   },
 
   // <-- Layout
@@ -49,6 +63,12 @@ const routes = [
         name: "Dashboard",
         component: DashboardView,
         meta: { title: "Dashboard" },
+      },
+      {
+        path: "/users",
+        name: "Users",
+        component: UserListView,
+        meta: { title: "Users" },
       },
       // {
       //   path: "settings",

@@ -7,7 +7,8 @@
   },
   "common": {
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "loading": "Loading..."
   },
   "routes": {
     "Dashboard": "Dashboard",
@@ -15,7 +16,8 @@
     "Login": "Login page",
     "Boats": "Boats",
     "BoatDetails": "Boat details",
-    "Services": "Services"
+    "Services": "Services",
+    "Users": "Users"
   },
   "login": {
     "email": "Email",
@@ -60,7 +62,9 @@
     "edit_success": "Work edited successfully",
     "subTasks": "Subtasks",
     "available_services": "Available services",
-    "structure": "Structure"
+    "structure": "Structure",
+    "select_service": "Select service",
+    "add_subtask": "Add subtask"
   },
   "services": {
     "title": "Services",
@@ -68,6 +72,17 @@
     "name": "Name",
     "actions": "Actions",
     "add": "Add service",
+    "id": "ID"
+  },
+  "users": {
+    "title": "Users",
+    "name": "Name",
+    "lastname": "Lastname",
+    "email": "Email",
+    "phone": "Phone number",
+    "role": "Role",
+    "actions": "Actions",
+    "add": "Add user",
     "id": "ID"
   }
 }

@@ -26,3 +26,10 @@ export function createWork(payload) {
     body: payload,
   });
 }
+
+export function updateWork(workId, payload) {
+  return apiFetch(`/work/${workId}`, {
+    method: "PUT",
+    body: payload,
+  });
+}

@@ -38,25 +38,25 @@
 
   <!-- 🔹 Dialog: Service details -->
   <Dialog
-    v-model:visible="ServiceDetailsDialogVisible"
+    v-model:visible="UserDetailsDialogVisible"
     modal
-    header="Service details"
+    header="User details"
     :style="{ width: '90vw', maxWidth: '500px' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
   >
-    <div v-if="selectedService" class="flex flex-col gap-4">
+    <div v-if="selectedUser" class="flex flex-col gap-4">
       <div class="flex flex-col gap-3">
         <div class="flex justify-between">
           <span class="font-medium">{{ t("services.id") }}</span>
-          <span>{{ selectedService.SID }}</span>
+          <span>{{ selectedUser.SID }}</span>
         </div>
         <div class="flex justify-between">
           <span class="font-medium">{{ t("services.part") }}</span>
-          <span>{{ selectedService.Part }}</span>
+          <span>{{ selectedUser.Part }}</span>
         </div>
         <div class="flex justify-between">
           <span class="font-medium">{{ t("services.name") }}</span>
-          <span>{{ selectedService.Name }}</span>
+          <span>{{ selectedUser.Name }}</span>
         </div>
       </div>
 
@@ -122,8 +122,8 @@ const toast = useToast();
 // 🔹 state
 const services = ref([]);
 const loading = ref(true);
-const selectedService = ref(null);
-const ServiceDetailsDialogVisible = ref(false);
+const selectedUser = ref(null);
+const UserDetailsDialogVisible = ref(false);
 const ServiceFormDialogVisible = ref(false);
 const isEditing = ref(false);
 const form = ref({ Part: "", Name: "" });
@@ -153,8 +153,8 @@ async function fetchServices() {
 
 // 🔹 Show details
 function showService(e) {
-  selectedService.value = e.data;
-  ServiceDetailsDialogVisible.value = true;
+  selectedUser.value = e.data;
+  UserDetailsDialogVisible.value = true;
 }
 
 // 🔹 Add / Edit dialog
@@ -165,10 +165,10 @@ function openAddDialog() {
 }
 
 function openEditDialog() {
-  if (!selectedService.value) return;
-  form.value = { ...selectedService.value };
+  if (!selectedUser.value) return;
+  form.value = { ...selectedUser.value };
   isEditing.value = true;
-  ServiceDetailsDialogVisible.value = false;
+  UserDetailsDialogVisible.value = false;
   ServiceFormDialogVisible.value = true;
 }
 
@@ -191,12 +191,12 @@ async function saveService() {
 
 // 🔹 Delete
 async function deleteService() {
-  if (!selectedService.value) return;
+  if (!selectedUser.value) return;
   if (!confirm(t("services.confirm_delete"))) return;
   try {
-    await deleteServiceById(selectedService.value.SID);
+    await deleteServiceById(selectedUser.value.SID);
     toast.add({ severity: "success", summary: t("services.deleted"), life: 2000 });
-    ServiceDetailsDialogVisible.value = false;
+    UserDetailsDialogVisible.value = false;
     await fetchServices();
   } catch (err) {
     toast.add({ severity: "error", summary: "Error deleting", life: 3000 });

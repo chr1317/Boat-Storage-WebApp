@@ -31,14 +31,22 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async login({ Email, Password }) {
-      try {
-        await login(Email, Password);
-        await this.fetchMe();
-      } catch (err) {
-        console.error("login error:", err);
-        throw err;
-      }
-    },
+  try {
+    const res = await login(Email, Password);
+
+    // 🔹 Jeśli backend mówi, że trzeba zmienić hasło, NIE loguj jeszcze
+    if (res.mustChangePassword) {
+      return res; // zwróć do LoginForm.vue
+    }
+
+    // 🔹 Normalny login
+    await this.fetchMe();
+    return { success: true };
+  } catch (err) {
+    console.error("login error:", err);
+    throw err;
+  }
+},
 
     async logout() {
       try {

@@ -263,6 +263,7 @@ router.get("/byqr/:qr", auth(["Admin","Employee","Client"]), async (req, res) =>
     const { qr } = req.params;
     if (!qr) return res.status(400).json({ error: "Missing QR parameter" });
 
+    console.log("QR param:", qr);
     const boat = await models.Boats.findOne({
       where: { QR: qr },
       include: [
@@ -273,6 +274,8 @@ router.get("/byqr/:qr", auth(["Admin","Employee","Client"]), async (req, res) =>
         { model: models.BoatPosition },
       ],
     });
+    console.log("Boat result:", boat ? boat.BID : "NOT FOUND");
+
 
     if (!boat) return res.status(404).json({ error: "Boat not found" });
 

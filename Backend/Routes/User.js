@@ -10,10 +10,10 @@ const EDITABLE_FIELDS = [
   "PhoneNr", "Email", "PostNr"
 ];
 
-// GET /users/me  -> zalogowany user widzi siebie
+// GET /user/me  -> zalogowany user widzi siebie
 router.get("/me", auth(), async (req, res) => {
   try {
-    const me = await models.Users.findByPk(req.user.id, {
+    const me = await models.User.findByPk(req.user.id, {
       attributes: { exclude: ["Password"] }
     });
     if (!me) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
@@ -23,20 +23,21 @@ router.get("/me", auth(), async (req, res) => {
   }
 });
 
-// GET /users -> Admin: lista wszystkich
+// GET /User -> Admin: lista wszystkich
 router.get("/", auth(["Admin"]), async (req, res) => {
   try {
-    const users = await models.Users.findAll({
+    const users = await models.User.findAll({
       attributes: { exclude: ["Password"] },
       order: [["UID", "ASC"]],
     });
     res.json(users);
   } catch (e) {
+    console.error("❌ [GET /users] error:", e);
     res.status(500).json({ error: "Błąd serwera" });
   }
 });
 
-// GET /users/:id  -> Admin; user tylko gdy :id == jego id
+// GET /user/:id  -> Admin; user tylko gdy :id == jego id
 router.get("/:id", auth(), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -45,7 +46,7 @@ router.get("/:id", auth(), async (req, res) => {
       return res.status(403).json({ error: "Brak uprawnień" });
     }
 
-    const user = await models.Users.findByPk(id, {
+    const user = await models.User.findByPk(id, {
       attributes: { exclude: ["Password"] }
     });
     if (!user) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
@@ -55,7 +56,7 @@ router.get("/:id", auth(), async (req, res) => {
   }
 });
 
-// PUT /users/me   -> user edytuje siebie (bez roli)
+// PUT /user/me   -> user edytuje siebie (bez roli)
 router.put("/me", auth(), async (req, res) => {
   try {
     const updates = {};
@@ -63,9 +64,9 @@ router.put("/me", auth(), async (req, res) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
 
-    await models.Users.update(updates, { where: { UID: req.user.id } });
+    await models.User.update(updates, { where: { UID: req.user.id } });
 
-    const refreshed = await models.Users.findByPk(req.user.id, {
+    const refreshed = await models.User.findByPk(req.user.id, {
       attributes: { exclude: ["Password"] }
     });
     res.json(refreshed);
@@ -74,7 +75,7 @@ router.put("/me", auth(), async (req, res) => {
   }
 });
 
-// PUT /users/:id  -> Admin każdego; user tylko siebie (i bez zmiany roli)
+// PUT /user/:id  -> Admin każdego; user tylko siebie (i bez zmiany roli)
 router.put("/:id", auth(), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -98,10 +99,10 @@ router.put("/:id", auth(), async (req, res) => {
       }
     }
 
-    const [count] = await models.Users.update(updates, { where: { UID: id } });
+    const [count] = await models.User.update(updates, { where: { UID: id } });
     if (!count) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 
-    const refreshed = await models.Users.findByPk(id, {
+    const refreshed = await models.User.findByPk(id, {
       attributes: { exclude: ["Password"] }
     });
     res.json(refreshed);
@@ -110,7 +111,7 @@ router.put("/:id", auth(), async (req, res) => {
   }
 });
 
-// PUT /users/:id/password  -> user: swoje hasło (wymaga oldPassword); Admin: dowolne (bez oldPassword)
+// PUT /user/:id/password  -> user: swoje hasło (wymaga oldPassword); Admin: dowolne (bez oldPassword)
 router.put("/:id/password", auth(), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
@@ -122,7 +123,7 @@ router.put("/:id/password", auth(), async (req, res) => {
       return res.status(403).json({ error: "Brak uprawnień" });
     }
 
-    const user = await models.Users.findByPk(id);
+    const user = await models.User.findByPk(id);
     if (!user) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
 
     if (!isAdmin) {
@@ -136,7 +137,7 @@ router.put("/:id/password", auth(), async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
-    await models.Users.update({ Password: hashed }, { where: { UID: id } });
+    await models.User.update({ Password: hashed }, { where: { UID: id } });
 
     res.json({ message: "Hasło zaktualizowane" });
   } catch (e) {
@@ -144,16 +145,81 @@ router.put("/:id/password", auth(), async (req, res) => {
   }
 });
 
-// DELETE /users/:id  -> tylko Admin
+// DELETE /user/:id  -> tylko Admin
 router.delete("/:id", auth(["Admin"]), async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-    const count = await models.Users.destroy({ where: { UID: id } });
+    const count = await models.User.destroy({ where: { UID: id } });
     if (!count) return res.status(404).json({ error: "Użytkownik nie znaleziony" });
     res.json({ message: "Użytkownik usunięty" });
   } catch (e) {
     res.status(500).json({ error: "Błąd serwera" });
   }
 });
+
+// POST /user -> Admin: tworzy nowego użytkownika
+router.post("/", auth(["Admin"]), async (req, res) => {
+  try {
+    const { Name, Lastname, City, Street, StreetNr, PhoneNr, Email, PostNr, Role } = req.body;
+
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const hashed = await bcrypt.hash(tempPassword, 10);
+
+    const newUser = await models.User.create({
+      Name,
+      Lastname,
+      City,
+      Street,
+      StreetNr,
+      PhoneNr,
+      Email,
+      PostNr,
+      Role,
+      Password: hashed,
+      MustChangePassword: true,
+    });
+    const { Password, ...safeData } = newUser.toJSON();
+
+    // Na testy pozniej zeby wysyłało maila
+    res.status(201).json({
+      message: "Użytkownik utworzony. Tymczasowe hasło zostało wygenerowane.",
+      tempPassword,
+      user: safeData,
+    });
+  } catch (e) {
+    console.error("❌ [POST /user] error:", e);
+    res.status(500).json({ error: "Błąd serwera" });
+  }
+});
+
+
+// PUT /user/:id/set-password
+router.put("/:id/set-password", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: "Password must have at least 6 characters" });
+    }
+
+    const user = await models.User.findByPk(id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    await models.User.update(
+      { Password: hashed, MustChangePassword: false },
+      { where: { UID: id } }
+    );
+
+    res.json({ message: "Password updated and flag cleared" });
+  } catch (err) {
+    console.error("[PUT /user/:id/set-password] error:", err);
+    res.status(500).json({ error: "Server error while updating password" });
+  }
+});
+
+
 
 module.exports = router;

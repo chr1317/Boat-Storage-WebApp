@@ -51,6 +51,16 @@
             <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.Services') }}</span>
           </RouterLink>
+          <RouterLink
+            v-if="['Admin'].includes(auth.role)"
+            to="/users"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/users') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Users') }}</span>
+          </RouterLink>
           
           <a
             class="flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"

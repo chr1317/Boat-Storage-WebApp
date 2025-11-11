@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     Date: {
       type: DataTypes.DATE,
-      allowNull: false
+      allowNull: true
     },
     seasonID: {
       type: DataTypes.INTEGER,

@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true
     },
+    PID: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  references: { model: "problems", key: "PID" }
+},
     Date: {
       type: DataTypes.DATE,
       allowNull: true

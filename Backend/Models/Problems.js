@@ -9,14 +9,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    WID: {
-      type: DataTypes.INTEGER,
-      allowNull: true
-    },
-    Description: {
-      type: DataTypes.STRING(50),
-      allowNull: false
-    },
     Type: {
       type: DataTypes.ENUM("Issue", "ClientRequest"),
       allowNull: false,
@@ -26,7 +18,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM("New", "InProgress", "Resolved"),
       allowNull: false,
       defaultValue: "New"
-    }
+    },
+    Description: {
+  type: DataTypes.STRING(500),
+  allowNull: false
+},
+    ApprovedByClient: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false
+}
+
   }, {
     tableName: "problems",
     timestamps: true 

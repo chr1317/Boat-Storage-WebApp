@@ -11,51 +11,51 @@ module.exports = (sequelize, DataTypes) => {
     },
     Model: {
       type: DataTypes.STRING(20),
-      allowNull: false
+      allowNull: true
     },
     Brand: {
       type: DataTypes.STRING(20),
-      allowNull: false
+      allowNull: true
     },
     Engine_nr: {
       type: DataTypes.STRING(50),
-      allowNull: false,
+      allowNull: true,
     },
     Reversing_gear: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Reversing_gear_nr: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Sterndrive: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Sterndrive_nr: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Transom: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     Transom_nr: {
       type: DataTypes.STRING(15),
-      allowNull: false
+      allowNull: true
     },
     BT: {
       type: DataTypes.STRING(10),
-      allowNull: false
+      allowNull: true
     },
     ST: {
       type: DataTypes.STRING(10),
-      allowNull: false
+      allowNull: true
     },
     Moto_H: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     }
   }, {
     tableName: "engine_information",

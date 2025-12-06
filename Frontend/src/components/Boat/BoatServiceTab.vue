@@ -172,7 +172,7 @@
     <!-- Add Work Dialog -->
     <BoatAddWorkDialog
       v-model:visible="addNewWorkDialogVisible"
-      :boat-id="route.params.id"
+      :boat-id="Number(route.params.id)"
       :season-id="works[0]?.seasonID || 1"
       :user-id="auth.user.UID"
       @created="fetchWorks"
@@ -393,4 +393,8 @@ async function saveSubtask() {
     toast.add({ severity: "error", summary: "Failed to add subtask", life: 3000 });
   }
 }
+
+defineExpose({
+  fetchWorks
+});
 </script>

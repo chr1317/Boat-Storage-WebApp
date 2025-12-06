@@ -13,6 +13,11 @@ const DashboardView = () => import("../views/DashboardView.vue");
 const BoatRedirectByQR = () => import("../components/Boat/BoatRedirectByQR.vue");
 const UserListView = () => import("../views/UserListView.vue");
 const SetPasswordView = () => import("../views/SetPasswordView.vue");
+const outRequestsView = () => import("../views/OutRequestView.vue");
+const HallMapView = () => import("../views/HallMapView.vue");
+const ProblemListView = () => import("../views/ProblemListView.vue");
+const WorkListView = () => import("../views/WorkListView.vue");
+const BoatHallsView = () => import("../views/BoatHallsView.vue");
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -32,52 +37,77 @@ const routes = [
     path: "/set-password",
     name: "SetPassword",
     component: SetPasswordView,
-  },
+  }, 
 
   // <-- Layout
   {
-    path: "/home",
-    component: HomeView,
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: "/boats",
-        name: "Boats",
-        component: BoatListView,
-        meta: { title: "Boats" },
-      },
-      {
-        path: "/boats/:id",
-        name: "BoatDetails",
-        component: BoatDetailsView,
-        meta: { title: "Boat Details" },
-      },
-      {
-        path: "/services",
-        name: "Services",
-        component: ServicesListView,
-        meta: { title: "Services" },
-      },
-      {
-        path: "/dashboard",
-        name: "Dashboard",
-        component: DashboardView,
-        meta: { title: "Dashboard" },
-      },
-      {
-        path: "/users",
-        name: "Users",
-        component: UserListView,
-        meta: { title: "Users" },
-      },
-      // {
-      //   path: "settings",
-      //   name: "Settings",
-      //   component: SettingsView,
-      //   meta: { title: "Settings" },
-      // },
-    ],
-  },
+  path: "/home",
+  component: HomeView,
+  meta: { requiresAuth: true },
+  children: [
+    {
+      path: "boats",
+      name: "Boats",
+      component: BoatListView,
+      meta: { title: "Boats" },
+    },
+    {
+      path: "boats/:id",
+      name: "BoatDetails",
+      component: BoatDetailsView,
+      meta: { title: "Boat Details" },
+    },
+    {
+      path: "services",
+      name: "Services",
+      component: ServicesListView,
+      meta: { title: "Services" },
+    },
+    {
+      path: "dashboard",
+      name: "Dashboard",
+      component: DashboardView,
+      meta: { title: "Dashboard" },
+    },
+    {
+      path: "users",
+      name: "Users",
+      component: UserListView,
+      meta: { title: "Users" },
+    },
+    {
+      path: "out-requests",
+      name: "OutRequests",
+      component: outRequestsView,
+      meta: { roles: ["Admin","Employee"] }
+    },
+    {
+      path: "halls/:id",
+      name: "HallMap",
+      component: HallMapView,
+      meta: { title: "Hall map", roles: ["Admin", "Employee"] },
+    },
+    {
+      path: "problems",
+      name: "Problems",
+      component: ProblemListView,
+      meta: { title: "Problems", roles: ["Admin", "Employee"] },
+    },
+    {
+      path: "works",
+      name: "Works",
+      component: WorkListView,
+      meta: { title: "Works", roles: ["Admin", "Employee"] },
+    },
+    {
+      path: "boat-halls",
+      name: "BoatHalls",
+      component: BoatHallsView,
+      meta: { title: "BoatHalls", roles: ["Admin", "Employee"] },
+    },
+  ],
+}
+
 ];
 
 const router = createRouter({

@@ -18,7 +18,7 @@
 
     <!-- Środek: logo -->
     <router-link
-      to="/dashboard"
+      to="/home/dashboard"
       class="flex items-center gap-2 select-none hover:cursor-pointer flex-shrink-0 justify-center"
     >
       <img

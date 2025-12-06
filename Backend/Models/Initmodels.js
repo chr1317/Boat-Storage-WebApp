@@ -11,6 +11,7 @@ var _Seasons = require("./Seasons");
 var _Services = require("./Services");
 var _User = require("./User");
 var _Work = require("./Work");
+var _BoatOutRequest = require("./BoatOutRequest");
 
 function initModels(sequelize) {
   var Boats = _Boats(sequelize, DataTypes);
@@ -24,6 +25,7 @@ function initModels(sequelize) {
   var Services = _Services(sequelize, DataTypes);
   var User = _User(sequelize, DataTypes);
   var Work = _Work(sequelize, DataTypes);
+  var BoatOutRequest = _BoatOutRequest(sequelize, DataTypes);
 
   // 🔹 User ↔ Boats
   Boats.belongsTo(User, { foreignKey: "UID", onDelete: "CASCADE", onUpdate: "CASCADE" });
@@ -59,9 +61,6 @@ function initModels(sequelize) {
   Problems.belongsTo(Boats, { foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boats.hasMany(Problems, { foreignKey: "BID" });
 
-  Problems.belongsTo(Work, { foreignKey: "WID", onDelete: "SET NULL", onUpdate: "CASCADE" });
-  Work.hasMany(Problems, { foreignKey: "WID" });
-
   // 🔹 Boats ↔ Work ↔ Seasons ↔ Services ↔ User
   Work.belongsTo(Boats, { foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boats.hasMany(Work, { foreignKey: "BID" });
@@ -78,6 +77,25 @@ function initModels(sequelize) {
   Work.hasMany(Work, { as: "subtasks", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Work.belongsTo(Work, { as: "parent", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
 
+    // 🔹 BoatOutRequest ↔ Boats
+  BoatOutRequest.belongsTo(Boats, {  foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  Boats.hasMany(BoatOutRequest, { foreignKey: "BID" });
+
+  // 🔹 BoatOutRequest ↔ Seasons
+  BoatOutRequest.belongsTo(Seasons, {  foreignKey: "seasonID", onDelete: "SET NULL", onUpdate: "CASCADE" });
+  Seasons.hasMany(BoatOutRequest, { foreignKey: "seasonID" });
+
+  // 🔹 BoatOutRequest ↔ User (requestedBy)
+  BoatOutRequest.belongsTo(User, { as: "Requester", foreignKey: "requestedBy", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  User.hasMany(BoatOutRequest, { as: "RequestedOuts", foreignKey: "requestedBy" });
+
+  // 🔹 BoatOutRequest ↔ User (handledBy)
+  BoatOutRequest.belongsTo(User, { as: "Handler", foreignKey: "handledBy", onDelete: "SET NULL", onUpdate: "CASCADE" });
+  User.hasMany(BoatOutRequest, { as: "HandledOuts", foreignKey: "handledBy" });
+
+  Problems.hasMany(Work, { foreignKey: "PID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+Work.belongsTo(Problems, { foreignKey: "PID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+
 
   return {
     Boats,
@@ -91,6 +109,7 @@ function initModels(sequelize) {
     Services,
     User,
     Work,
+    BoatOutRequest,
   };
 }
 

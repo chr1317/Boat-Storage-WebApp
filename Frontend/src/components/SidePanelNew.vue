@@ -21,7 +21,7 @@
         <!-- NAV -->
         <nav class="flex flex-col px-4 pt-6 gap-2 flex-1">
           <RouterLink
-            to="/dashboard"
+            to="/home/dashboard"
             @click="$emit('close')"
             class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
             :class="{ active: route.path.startsWith('/dashboard') }"
@@ -32,7 +32,7 @@
           <!-- Boats -->
           <RouterLink
             v-if="['Admin', 'Employee'].includes(auth.role)"
-            to="/boats"
+            to="/home/boats"
             @click="$emit('close')"
             class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
             :class="{ active: route.path.startsWith('/boats') }"
@@ -43,7 +43,7 @@
           <!-- Services -->
           <RouterLink
             v-if="['Admin', 'Employee'].includes(auth.role)"
-            to="/services"
+            to="/home/services"
             @click="$emit('close')"
             class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
             :class="{ active: route.path.startsWith('/services') }"
@@ -52,8 +52,28 @@
             <span class="font-medium">{{ t('routes.Services') }}</span>
           </RouterLink>
           <RouterLink
+            v-if="['Admin', 'Employee'].includes(auth.role)"
+            to="/home/problems"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/problems') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Problems') }}</span>
+          </RouterLink>
+          <RouterLink
+            v-if="['Admin', 'Employee'].includes(auth.role)"
+            to="/home/works"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/works') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Works') }}</span>
+          </RouterLink>
+          <RouterLink
             v-if="['Admin'].includes(auth.role)"
-            to="/users"
+            to="/home/users"
             @click="$emit('close')"
             class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
             :class="{ active: route.path.startsWith('/users') }"
@@ -61,13 +81,28 @@
             <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.Users') }}</span>
           </RouterLink>
-          
-          <a
-            class="flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+          <RouterLink
+            v-if="['Admin', 'Employee'].includes(auth.role)"
+            to="/home/out-requests"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/home/out-requests') }"
           >
-            <i class="pi pi-cog text-lg"></i>
-            <span class="font-medium">{{ t('routes.Settings') }}</span>
-          </a>
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.OutRequests') }}</span>
+          </RouterLink>
+          <RouterLink
+            v-if="['Admin'].includes(auth.role)"
+            to="/home/boat-halls"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/boat-halls') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.boatHalls') }}</span>
+          </RouterLink>
+          
+      
         </nav>
 
         <!-- STOPKA -->

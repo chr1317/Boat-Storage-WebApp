@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     Weight: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     U_Color: {
       type: DataTypes.STRING(10),

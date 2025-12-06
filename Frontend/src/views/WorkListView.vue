@@ -1,216 +1,254 @@
 <template>
   <div class="p-6">
-    <!-- 🔹 Header -->
-    <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-      <h2 class="text-2xl font-semibold">{{ t("services.title") }}</h2>
+    <!-- HEADER + FILTERS -->
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+      <h2 class="text-2xl font-semibold">{{ t("works.all_title") }}</h2>
 
-      <Button
-        icon="pi pi-plus"
-        :label="t('works.add')"
-        severity="primary"
-        class="w-full sm:w-auto"
-        @click="openAddDialog"
-      />
+      <div class="flex gap-3 items-center flex-wrap">
+        <!-- Status Filter -->
+        <Dropdown
+          v-model="statusFilter"
+          :options="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Filter by status"
+          class="w-48"
+          @change="filterWorks"
+        />
+
+        <Button
+          v-if="isStaff"
+          icon="pi pi-plus"
+          :label="t('works.add')"
+          severity="primary"
+          class="w-full sm:w-auto"
+          @click="openAddDialog"
+        />
+      </div>
     </div>
 
-    <!-- 🔹 Table -->
-    <DynamicTable
-      :data="works"
-      :columns="columns"
+    <!-- WORK TABLE -->
+    <DataTable
+      :value="filteredWorks"
+      dataKey="WID"
+      :paginator="true"
+      :rows="12"
+      class="p-datatable-sm"
       :loading="loading"
-      @row-click="showService"
-      class="overflow-x-auto"
+      v-model:expandedRows="expandedRows"
+      @row-click="openDetails"
     >
-      <template #actions>
-        <Column header="Actions">
-          <template #body="{ data }">
+      <Column expander style="width: 3rem" />
+
+      <Column field="WID" header="ID" sortable style="width: 80px" />
+
+      <Column field="Boat.name" :header="t('works.boat')" sortable>
+        <template #body="{ data }">
+          <Button
+            link
+            class="p-0 underline"
+            @click.stop="goToBoat(data.BID)"
+          >
+            {{ data.Boat?.name || "—" }}
+          </Button>
+        </template>
+      </Column>
+
+      <Column field="Service.Name" :header="t('works.service')" sortable />
+
+      <Column field="Service.Part" :header="t('works.part')" />
+
+      <Column field="User.Name" :header="t('works.worker')">
+        <template #body="{ data }">
+          <span v-if="!data.parentWID">{{ data.User?.Name || '—' }}</span>
+        </template>
+      </Column>
+
+      <Column field="Date" :header="t('works.date')" sortable>
+        <template #body="{ data }">{{ formatDate(data.Date) }}</template>
+      </Column>
+
+      <Column field="State" :header="t('works.status')" sortable>
+        <template #body="{ data }">
+          <Tag :value="data.State" :severity="getStateColor(data.State)" />
+        </template>
+      </Column>
+
+      <Column :header="t('works.actions')" style="width: 10rem">
+        <template #body="{ data }">
+          <div class="flex gap-2 justify-center">
             <Button
               icon="pi pi-search"
-              label="View"
+              rounded
+              outlined
               size="small"
-              @click.stop="showService({ data })"
+              severity="info"
+              v-tooltip.bottom="'View details'"
+              @click.stop="openDetails({ data })"
             />
-          </template>
-        </Column>
+
+            <Button
+              icon="pi pi-directions"
+              rounded
+              outlined
+              size="small"
+              severity="secondary"
+              v-tooltip.bottom="'Go to boat'"
+              @click.stop="goToBoat(data.BID)"
+            />
+
+            <Button
+              v-if="isStaff"
+              icon="pi pi-trash"
+              rounded
+              outlined
+              size="small"
+              severity="danger"
+              v-tooltip.bottom="t('works.delete')"
+              @click.stop="handleDeleteWork(data.WID)"
+            />
+          </div>
+        </template>
+      </Column>
+
+      <!-- EXPANSION: SUBTASKS -->
+      <template #expansion="{ data }">
+        <div v-if="data.subtasks?.length" class="p-3 bg-gray-50 rounded">
+          <h4 class="text-sm font-semibold mb-2">{{ t("works.subTasks") }}</h4>
+
+          <DataTable :value="data.subtasks" size="small">
+            <Column field="Service.Name" :header="t('works.service')" />
+            <Column field="Comment" :header="t('works.comment')" />
+            <Column field="Date" :header="t('works.date')">
+              <template #body="{ data }">
+                {{ formatDate(data.Date) }}
+              </template>
+            </Column>
+            <Column field="State" :header="t('works.status')">
+              <template #body="{ data }">
+                <Tag :value="data.State" :severity="getStateColor(data.State)" />
+              </template>
+            </Column>
+          </DataTable>
+        </div>
+
+        <div v-else class="text-center text-gray-400 italic py-2">
+          {{ t("works.no_subtasks") }}
+        </div>
       </template>
-    </DynamicTable>
+    </DataTable>
+
+    <!-- WORK DETAILS DIALOG -->
+    <WorkDetailsDialog
+      v-model:visible="detailsDialogVisible"
+      :work="selectedWork"
+      @refresh="fetchWorks"
+    />
+
+    <!-- Add Work Dialog -->
+    <WorkAddDialog
+      v-model:visible="addDialogVisible"
+      @created="fetchWorks"
+    />
   </div>
-
-  <!-- 🔹 Dialog: Service details -->
-  <Dialog
-    v-model:visible="ServiceDetailsDialogVisible"
-    modal
-    header="Service details"
-    :style="{ width: '90vw', maxWidth: '500px' }"
-    :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
-  >
-    <div v-if="selectedService" class="flex flex-col gap-4">
-      <div class="flex flex-col gap-3">
-        <div class="flex justify-between">
-          <span class="font-medium">{{ t("works.id") }}</span>
-          <span>{{ selectedService.SID }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="font-medium">{{ t("works.part") }}</span>
-          <span>{{ selectedService.Part }}</span>
-        </div>
-        <div class="flex justify-between">
-          <span class="font-medium">{{ t("works.name") }}</span>
-          <span>{{ selectedService.Name }}</span>
-        </div>
-      </div>
-
-      <!-- 🔸 Buttons -->
-      <div class="flex justify-end gap-2 mt-4">
-        <Button
-          icon="pi pi-pencil"
-          :label="t('common.edit')"
-          outlined
-          @click="openEditDialog"
-        />
-        <Button
-          icon="pi pi-trash"
-          :label="t('common.delete')"
-          severity="danger"
-          outlined
-          @click="deleteService"
-        />
-      </div>
-    </div>
-  </Dialog>
-
-  <!-- 🔹 Dialog: Add/Edit service -->
-  <Dialog
-    v-model:visible="ServiceFormDialogVisible"
-    modal
-    :header="isEditing ? t('works.edit') : t('works.add')"
-    :style="{ width: '90vw', maxWidth: '450px' }"
-    :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
-  >
-    <div class="flex flex-col gap-4">
-      <div>
-        <label class="block mb-1 font-medium">{{ t("works.part") }}</label>
-        <InputText v-model="form.Part" placeholder="e.g. Engine" />
-      </div>
-
-      <div>
-        <label class="block mb-1 font-medium">{{ t("works.name") }}</label>
-        <InputText v-model="form.Name" placeholder="e.g. Oil change" />
-      </div>
-    </div>
-
-    <template #footer>
-      <Button label="Cancel" outlined @click="ServiceFormDialogVisible = false" />
-      <Button label="Save" @click="saveService" />
-    </template>
-  </Dialog>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useToast } from "primevue/usetoast";
+import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { getServices, createService, updateService, deleteServiceById } from "../services/serviceService";
-import DynamicTable from "../components/DynamicTable.vue";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
+import { useAuthStore } from "../stores/auth";
+import { useToast } from "primevue/usetoast";
 
-const { t } = useI18n({ useScope: "global" });
+import { getAllWorks, deleteWork } from "../services/workService";
+
+import WorkDetailsDialog from "../components/WorkDetailsDialog.vue";
+import WorkAddDialog from "../components/Boat/BoatAddWorkDialog.vue";
+
+const { t } = useI18n();
 const toast = useToast();
+const router = useRouter();
+const auth = useAuthStore();
 
-// 🔹 state
 const works = ref([]);
+const filteredWorks = ref([]);
+
+const statusFilter = ref(null);
+const detailsDialogVisible = ref(false);
+
+const selectedWork = ref(null);
 const loading = ref(true);
-const selectedService = ref(null);
-const ServiceDetailsDialogVisible = ref(false);
-const ServiceFormDialogVisible = ref(false);
-const isEditing = ref(false);
-const form = ref({ Part: "", Name: "" });
+const expandedRows = ref([]);
 
-// 🔹 Columns
-const columns = computed(() => [
-  { field: "SID", header: "ID", sortable: true, width: "80px" },
-  { field: "Part", header: t("works.part") },
-  { field: "Name", header: t("works.name") },
-]);
+const addDialogVisible = ref(false);
 
-// 🔹 Load data
+const isStaff = computed(() =>
+  ["Admin", "Employee"].includes(auth.user?.Role)
+);
+
+const statusOptions = [
+  { label: t("state.all"), value: null },
+  { label: "To do", value: "ToDo" },
+  { label: "In progress", value: "InProgress" },
+  { label: "Done", value: "Done" },
+];
+
 onMounted(fetchWorks);
 
 async function fetchWorks() {
+  loading.value = true;
   try {
-    loading.value = true;
-    const res = await getWorks();
-    works.value = Array.isArray(res) ? res : res.data || [];
-  } catch (err) {
-    console.error("Error loading works:", err);
-    toast.add({ severity: "error", summary: "Error", detail: "Could not load works", life: 3000 });
+    works.value = await getAllWorks();
+    filteredWorks.value = works.value;
+    expandedRows.value = [];
+  } catch {
+    toast.add({ severity: "error", summary: "Error loading works" });
   } finally {
     loading.value = false;
   }
 }
 
-// 🔹 Show details
-function showService(e) {
-  selectedService.value = e.data;
-  ServiceDetailsDialogVisible.value = true;
+function filterWorks() {
+  if (!statusFilter.value) {
+    filteredWorks.value = works.value;
+    return;
+  }
+  filteredWorks.value = works.value.filter(w => w.State === statusFilter.value);
 }
 
-// 🔹 Add / Edit dialog
+function openDetails({ data }) {
+  selectedWork.value = data;
+  detailsDialogVisible.value = true;
+}
+
+function goToBoat(boatId) {
+  router.push(`/home/boats/${boatId}`);
+}
+
+function formatDate(date) {
+  return date ? new Date(date).toLocaleDateString() : "—";
+}
+
+function getStateColor(s) {
+  return {
+    Done: "success",
+    InProgress: "info",
+    ToDo: "warning",
+  }[s];
+}
+
+async function handleDeleteWork(id) {
+  if (!confirm(t("works.confirm_delete"))) return;
+  try {
+    await deleteWork(id);
+    toast.add({ severity: "success", summary: t("works.deleted") });
+    fetchWorks();
+  } catch {
+    toast.add({ severity: "error", summary: "Error deleting" });
+  }
+}
+
 function openAddDialog() {
-  form.value = { Part: "", Name: "" };
-  isEditing.value = false;
-  ServiceFormDialogVisible.value = true;
-}
-
-function openEditDialog() {
-  if (!selectedService.value) return;
-  form.value = { ...selectedService.value };
-  isEditing.value = true;
-  ServiceDetailsDialogVisible.value = false;
-  ServiceFormDialogVisible.value = true;
-}
-
-// 🔹 Save (create or update)
-async function saveService() {
-  try {
-    if (isEditing.value) {
-      await updateService(form.value.SID, form.value);
-      toast.add({ severity: "success", summary: t("works.updated"), life: 2000 });
-    } else {
-      await createService(form.value);
-      toast.add({ severity: "success", summary: t("works.created"), life: 2000 });
-    }
-    ServiceFormDialogVisible.value = false;
-    await fetchServices();
-  } catch (err) {
-    toast.add({ severity: "error", summary: "Error saving", life: 3000 });
-  }
-}
-
-// 🔹 Delete
-async function deleteService() {
-  if (!selectedService.value) return;
-  if (!confirm(t("services.confirm_delete"))) return;
-  try {
-    await deleteServiceById(selectedService.value.SID);
-    toast.add({ severity: "success", summary: t("services.deleted"), life: 2000 });
-    ServiceDetailsDialogVisible.value = false;
-    await fetchServices();
-  } catch (err) {
-    toast.add({ severity: "error", summary: "Error deleting", life: 3000 });
-  }
+  addDialogVisible.value = true;
 }
 </script>
-
-<style scoped>
-/* minimalne poprawki do mobile UX */
-@media (max-width: 640px) {
-  .p-dialog {
-    margin: 0 !important;
-    border-radius: 0 !important;
-    height: 100vh !important;
-  }
-}
-</style>

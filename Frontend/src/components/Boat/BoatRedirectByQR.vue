@@ -11,7 +11,7 @@ onMounted(async () => {
 
   try {
     const boat = await getBoatByQR(qr);
-    router.replace(`/boats/${boat.BID}?tab=service`);
+    router.replace(`/home/boats/${boat.BID}?tab=service`);
   } catch (err) {
     console.error("QR redirect error:", err);
     const message = err.message || "";

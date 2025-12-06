@@ -28,7 +28,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     BHID: {
       type: DataTypes.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     Drive: {
       type: DataTypes.STRING(30),

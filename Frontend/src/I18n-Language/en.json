@@ -6,9 +6,13 @@
     "settings": "Settings"
   },
   "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add",
     "edit": "Edit",
     "delete": "Delete",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "required": "Required"
   },
   "routes": {
     "Dashboard": "Dashboard",
@@ -17,7 +21,13 @@
     "Boats": "Boats",
     "BoatDetails": "Boat details",
     "Services": "Services",
-    "Users": "Users"
+    "Users": "Users",
+    "OutRequests": "Out requests",
+    "Problems": "Problems",
+    "Works": "Works",
+    "boatHalls": "Boathalls",
+    "BoatHalls": "Boathalls",
+    "HallMap": "Hall map"
   },
   "login": {
     "email": "Email",
@@ -34,6 +44,7 @@
     "bad_email_format": "Bad email format"
   },
   "boat": {
+    "boat": "Boat",
     "owner": "Owner",
     "phone": "Owners phone number",
     "boathall": "BoatHall",
@@ -64,7 +75,40 @@
     "available_services": "Available services",
     "structure": "Structure",
     "select_service": "Select service",
-    "add_subtask": "Add subtask"
+    "add_subtask": "Add subtask",
+    "select": "Select boat",
+    "type": "Type",
+    "drive": "Drive",
+    "length": "Length",
+    "width": "Width",
+    "height": "Height",
+    "weight": "Weight",
+    "select_boat": "Select boat"
+  },
+  "clientBoats": {
+    "title": "Boats",
+    "status_in_hall": "In hall"
+  },
+  "employee": {
+    "works_title": "Your works",
+    "no_works": "You have no assigned works.",
+
+    "id": "ID",
+    "boat": "Boat",
+    "hall": "Hall",
+    "service": "Service",
+    "status": "Status",
+    "actions": "Actions",
+    "open": "Open",
+    "open_boat": "Open boat",
+    "comment": "Comment",
+    "details": "Work details",
+
+    "todo": "To do",
+    "inprogress": "In progress",
+    "done": "Done",
+
+    "load_failed": "Failed to load work list"
   },
   "services": {
     "title": "Services",
@@ -75,14 +119,130 @@
     "id": "ID"
   },
   "users": {
+    "details": "Details",
     "title": "Users",
     "name": "Name",
     "lastname": "Lastname",
     "email": "Email",
     "phone": "Phone number",
+    "city": "City",
+    "street": "Street",
+    "streetnr": "Street number",
+    "postnr": "Post number",
+    "address": "Address",
     "role": "Role",
     "actions": "Actions",
     "add": "Add user",
     "id": "ID"
+  },
+  "problems": {
+  "title": "Reported Problems",
+  "all": "All problems",
+  "recent": "Recent problems",
+  "new": "New",
+  "inProgress": "In progress",
+  "resolved": "Resolved",
+  "items": "items",
+  "id": "ID",
+  "boat": "Boat",
+  "description": "Description",
+  "type": "Type",
+  "status": "Status",
+  "empty": "No problems reported.",
+  "date": "Date",
+  "details": "Problem details",
+  "add": "Add problem",
+  "approveTitle": "Confirm approval",
+  "approveConfirm": "Are you sure you want to approve problem",
+  "approveButton": "Approve"
+},
+ "outRequest": {
+    "title": "Departure request",
+    "help": "Choose a week and type of departure. The final day will be confirmed by the staff.",
+    "type": "Departure type",
+    "week": "Preferred week",
+    "week_hint": "Select a date range (7 days). The boat can be scheduled on any day within this range.",
+    "comment": "Comment",
+    "send": "Send request",
+    "my_requests": "Your departure requests",
+    "status": "Status",
+    "confirmedDate": "Confirmed date",
+    "actions": "Actions",
+    "only_client": "Only clients can create departure requests.",
+    "week_required": "Preferred week is required.",
+    "created": "Departure request created.",
+    "create_failed": "Failed to create departure request.",
+    "confirm_cancel": "Cancel this request?",
+    "cancel_failed": "Failed to cancel request.",
+
+    "admin_title": "Departure requests",
+    "filter_status": "Filter by status",
+    "all_statuses": "All statuses",
+    "boat": "Boat",
+    "requester": "Client",
+    "review_title": "Review departure request",
+    "reject_reason": "Reject reason",
+    "confirmed_hint": "Select the final departure day within the requested week.",
+    "confirm_required": "Confirmed date is required.",
+    "approved": "Request approved.",
+    "approve_failed": "Failed to approve request.",
+    "rejected": "Request rejected.",
+    "reject_failed": "Failed to reject request.",
+    "reason": "Reject reason"
+  },
+  "works": {
+    "all_title": "Works",
+    "filter_status": "Filter by status",
+    "all_status": "All statuses",
+    "no_subtasks": "No subtasks",
+
+    "id": "ID",
+    "boat": "Boat",
+    "service": "Service",
+    "date": "Date",
+    "state": "State",
+    "comment": "Comment",
+    "part": "Part",
+    "worker": "Worker",
+    "hours": "Hours",
+    "actions": "Actions",
+    "add": "Add work",
+    "changeState": "Change work state",
+    "delete": "Delete work",
+    "delete_confirm": "Are you sure you want to delete this work?",
+    "delete_success": "Work deleted successfully",
+    "delete_error": "Error deleting work",
+    "edit": "Edit work",
+    "edit_success": "Work edited successfully",
+    "subTasks": "Subtasks",
+    "available_services": "Available services",
+    "structure": "Structure",
+    "select_service": "Select service",
+    "add_subtask": "Add subtask",
+
+    "details": "Work details",
+    "go_to_boat": "Go to boat",
+
+    "created": "Work created",
+    "updated": "Work updated",
+    "deleted": "Work deleted",
+    "confirm_delete": "Are you sure you want to delete this work?",
+    "status":"Status",
+    "state_TODO": "To do",
+    "state_INPROGRESS": "In progress",
+    "state_DONE": "Done"
+  },
+  
+  "hall": {
+    "title": "Boathalls",
+    "add": "Add hall",
+    "name": "Hall name",
+    "width": "Width",
+    "length": "Length",
+    "dimensions": "Dimensions",
+    "boats": "Boats inside",
+    "created": "Hall created",
+    "height": "Height",
+    "margin": "Margin"
   }
 }

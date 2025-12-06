@@ -33,3 +33,12 @@ export function updateWork(workId, payload) {
     body: payload,
   });
 }
+
+// Works assigned to current logged-in employee
+export function getEmployeeWorks() {
+  return apiFetch(`/work/employee`);
+}
+
+export function getAllWorks() {
+  return apiFetch(`/work`);
+}

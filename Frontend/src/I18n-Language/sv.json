@@ -6,6 +6,9 @@
     "settings": "Inställningar"
   },
   "common": {
+    "cancel": "Avbryt",
+    "save": "Spara",
+    "add": "Lägg till",
     "edit": "Redigera",
     "delete": "Ta bort",
     "loading": "Laddar..."
@@ -75,12 +78,34 @@
     "id": "ID"
   },
   "users": {
+    "details": "Detaljer",
     "title": "Användare",
     "name": "Namn",
     "lastname": "Efternamn",
     "email": "E-post",
     "phone": "Telefonnummer",
+    "city": "Stad",
+    "street": "Gata",
+    "streetnr": "Gatunummer",
+    "postnr": "Postnummer",
+    "address": "Adress",
     "role": "Roll",
     "actions": "Aktioner"
-  }
+  },
+  "problems": {
+  "title": "Rapporterade problem",
+  "all": "Alla problem",
+  "recent": "Senaste problem",
+  "new": "Nytt",
+  "inProgress": "Pågår",
+  "resolved": "Avslutat",
+  "items": "poster",
+  "id": "ID",
+  "boat": "Båt",
+  "description": "Beskrivning",
+  "type": "Typ",
+  "status": "Status",
+  "empty": "Inga problem rapporterade."
+}
+
 }

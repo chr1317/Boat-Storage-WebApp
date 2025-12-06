@@ -1,4 +1,11 @@
 {
+  "scripts": {
+    "start": "node app.js",
+    "dev": "cross-env NODE_ENV=dev node app.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand",
+  "test:watch": "cross-env NODE_ENV=test jest --watch",
+  "test:coverage": "cross-env NODE_ENV=test jest --coverage"
+},
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
@@ -8,9 +15,19 @@
     "jsonwebtoken": "^9.0.2",
     "mariadb": "^3.4.5",
     "mysql2": "^3.15.1",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
-  }
+    "cross-env": "^10.1.0",
+    "jest": "^30.2.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4"
+  },
+  "jest": {
+  "collectCoverage": true,
+  "collectCoverageFrom": [
+    "Backend/Controllers/**/*.js"
+  ]
+}
 }

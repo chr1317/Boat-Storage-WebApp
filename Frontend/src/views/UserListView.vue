@@ -6,7 +6,7 @@
 
       <Button
         icon="pi pi-plus"
-        :label="t('user.add')"
+        :label="t('common.add')"
         severity="primary"
         class="w-full sm:w-auto"
         @click="openAddDialog"
@@ -40,7 +40,7 @@
   <Dialog
     v-model:visible="UserDetailsDialogVisible"
     modal
-    :header="t('user.details')"
+    :header="t('users.details')"
     :style="{ width: '90vw', maxWidth: '500px' }"
   >
     <div v-if="selectedUser" class="flex flex-col gap-3">
@@ -49,6 +49,12 @@
       <div class="flex justify-between"><span>{{ t('users.lastname') }}</span><span>{{ selectedUser.Lastname }}</span></div>
       <div class="flex justify-between"><span>{{ t('users.email') }}</span><span>{{ selectedUser.Email }}</span></div>
       <div class="flex justify-between"><span>{{ t('users.phone') }}</span><span>{{ selectedUser.PhoneNr }}</span></div>
+      <div class="flex justify-between">
+      <span>{{ t('users.address') }}</span>
+      <span>
+          {{ [selectedUser.Street, selectedUser.StreetNr, selectedUser.City].filter(Boolean).join(" ") }}
+      </span>
+      </div>
       <div class="flex justify-between"><span>{{ t('users.role') }}</span><span>{{ selectedUser.Role }}</span></div>
 
       <div class="flex justify-end gap-2 mt-4">
@@ -60,32 +66,113 @@
   </Dialog>
 
   <!-- Add/Edit user -->
-  <Dialog
-    v-model:visible="UserFormDialogVisible"
-    modal
-    :header="isEditing ? t('user.edit') : t('user.add')"
-    :style="{ width: '90vw', maxWidth: '450px' }"
-  >
-    <div class="flex flex-col gap-4">
-      <div><label>{{ t('users.name') }}</label><InputText v-model="form.Name" /></div>
-      <div><label>{{ t('users.lastname') }}</label><InputText v-model="form.Lastname" /></div>
-      <div><label>{{ t('users.email') }}</label><InputText v-model="form.Email" /></div>
-      <div><label>{{ t('users.phone') }}</label><InputText v-model="form.PhoneNr" /></div>
-      <div>
-        <label>{{ t('users.role') }}</label>
-        <select v-model="form.Role" class="border rounded-md p-2 w-full">
-          <option value="Client">Client</option>
-          <option value="Employee">Employee</option>
-          <option value="Admin">Admin</option>
-        </select>
-      </div>
+<!-- Add/Edit user -->
+<!-- Add/Edit user -->
+<Dialog
+  v-model:visible="UserFormDialogVisible"
+  modal
+  :header="isEditing ? t('common.edit') : t('common.add')"
+  :style="{ width: '90vw', maxWidth: '500px' }"
+>
+  <!-- legenda wymaganych pól -->
+  <p class="text-xs text-gray-500 mb-3">
+    <span class="text-red-500">*</span> {{ t('common.required') || 'required fields' }}
+  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- Name (required) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.name') }}
+        <span class="text-red-500 ml-0.5">*</span>
+      </label>
+      <InputText v-model="form.Name" class="w-full" required />
     </div>
 
-    <template #footer>
-      <Button label="Cancel" outlined @click="UserFormDialogVisible = false" />
-      <Button label="Save" @click="saveUser" />
-    </template>
-  </Dialog>
+    <!-- Lastname (optional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.lastname') }}
+      </label>
+      <InputText v-model="form.Lastname" class="w-full" />
+    </div>
+
+    <!-- Email (required) -->
+    <div class="flex flex-col gap-1 md:col-span-2">
+      <label class="text-sm font-medium">
+        {{ t('users.email') }}
+        <span class="text-red-500 ml-0.5">*</span>
+      </label>
+      <InputText v-model="form.Email" class="w-full" type="email" required />
+    </div>
+
+    <!-- Phone (required) -->
+    <div class="flex flex-col gap-1 md:col-span-2">
+      <label class="text-sm font-medium">
+        {{ t('users.phone') }}
+        <span class="text-red-500 ml-0.5">*</span>
+      </label>
+      <InputText v-model="form.PhoneNr" class="w-full" required />
+    </div>
+
+    <!-- City (optional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.city') }}
+      </label>
+      <InputText v-model="form.City" class="w-full" />
+    </div>
+
+    <!-- Street (optional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.street') }}
+      </label>
+      <InputText v-model="form.Street" class="w-full" />
+    </div>
+
+    <!-- Street number (optional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.streetnr') }}
+      </label>
+      <InputText v-model="form.StreetNr" class="w-full" />
+    </div>
+
+    <!-- Post number (optional) -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-medium">
+        {{ t('users.postnr') }}
+      </label>
+      <InputText v-model="form.PostNr" class="w-full" />
+    </div>
+
+    <!-- Role (required) -->
+    <div class="flex flex-col gap-1 md:col-span-2">
+      <label class="text-sm font-medium">
+        {{ t('users.role') }}
+        <span class="text-red-500 ml-0.5">*</span>
+      </label>
+      <select
+        v-model="form.Role"
+        class="border rounded-md p-2 w-full"
+        required
+      >
+        <option value="Client">Client</option>
+        <option value="Employee">Employee</option>
+        <option value="Admin">Admin</option>
+      </select>
+    </div>
+  </div>
+
+  <template #footer>
+    <Button :label="t('common.cancel')" outlined @click="UserFormDialogVisible = false" />
+    <Button :label="t('common.save')" @click="saveUser" />
+  </template>
+</Dialog>
+
+
+
 
   <!-- Reset password dialog -->
   <Dialog
@@ -157,10 +244,21 @@ function showUser(e) {
 }
 
 function openAddDialog() {
-  form.value = { Name: "", Lastname: "", Email: "", PhoneNr: "", Role: "Client" };
+  form.value = {
+    Name: "",
+    Lastname: "",
+    Email: "",
+    PhoneNr: "",
+    City: "",
+    Street: "",
+    StreetNr: "",
+    PostNr: "",
+    Role: "Client",
+  };
   isEditing.value = false;
   UserFormDialogVisible.value = true;
 }
+
 
 function openEditDialog() {
   if (!selectedUser.value) return;
@@ -169,6 +267,7 @@ function openEditDialog() {
   UserDetailsDialogVisible.value = false;
   UserFormDialogVisible.value = true;
 }
+
 
 async function saveUser() {
   try {

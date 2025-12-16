@@ -16,9 +16,6 @@ const WORK_FIELDS_ADMIN = [
   "parentWID",
 ];
 
-// ============================================================
-// HELPER: RECALC PARENT STATE
-// ============================================================
 async function recalcParentState(parentWID, t) {
   const subtasks = await models.Work.findAll({
     where: { parentWID },
@@ -56,9 +53,6 @@ async function recalcParentState(parentWID, t) {
 
 
 module.exports = {
-  // ============================================================
-  // CREATE WORK
-  // ============================================================
   async create(req, res) {
   const t = await sequelize.transaction();
   try {
@@ -69,7 +63,6 @@ module.exports = {
 
     const { AID, SID, parentWID } = payload;
 
-    // ETAP 3: wymagamy AID, nie tworzymy już pracy tylko po BID + seasonID
     if (!AID) {
       await t.rollback();
       return res
@@ -80,7 +73,6 @@ module.exports = {
         });
     }
 
-    // odczytujemy kontekst przechowywania z BoatStorage
     const storage = await models.BoatStorage.findByPk(AID, {
       transaction: t,
     });
@@ -91,7 +83,6 @@ module.exports = {
         .json({ error: "BoatStorage (AID) not found" });
     }
 
-    // nadpisujemy BID + seasonID na podstawie BoatStorage
     payload.BID = storage.BID;
     payload.seasonID = storage.seasonID;
 
@@ -109,7 +100,6 @@ module.exports = {
       throw new Error("Invalid work state");
     }
 
-    // SUBTASK RULES
     if (parentWID) {
       const parent = await models.Work.findByPk(parentWID, {
         transaction: t,
@@ -118,7 +108,6 @@ module.exports = {
       if (parent.parentWID)
         throw new Error("Only one level of subtasks allowed");
 
-      // subtask nie ma HR/UID
       payload.HR = null;
       payload.UID = null;
     }
@@ -134,14 +123,6 @@ module.exports = {
   }
 },
 
-
-
-  // ============================================================
-  // LIST ALL
-  // ============================================================
- // ============================================================
-// LIST ALL
-// ============================================================
 async listAll(req, res) {
   try {
     const works = await models.Work.findAll({
@@ -179,7 +160,6 @@ async listByStorage(req, res) {
 
     const isStaff = ["Admin", "Employee"].includes(req.user.role);
 
-    // CLIENT → tylko swoje łodzie
     if (!isStaff && storage.Boat.UID !== req.user.id) {
       return res.status(403).json({ error: "Forbidden" });
     }
@@ -232,12 +212,6 @@ async listByStorage(req, res) {
       const BID = parseInt(req.params.bid, 10);
       if (!BID) return res.status(400).json({ error: "Invalid BID" });
 
-      // Jeśli chcesz ograniczyć uprawnienia:
-      // - staff widzi wszystko
-      // - klient widzi tylko swoje łodzie
-      // Zostawiam jako opcjonalne:
-      // if (!["Admin", "Employee"].includes(req.user.role)) { ... }
-
       const [rows] = await sequelize.query(
   `
   SELECT
@@ -280,12 +254,6 @@ ORDER BY w.Date DESC, w.WID DESC;
     }
   },
 
-  // ============================================================
-  // LIST BY BOAT
-  // ============================================================
- // ============================================================
-// LIST BY BOAT
-// ============================================================
 async listByBoat(req, res) {
   try {
     const boatId = parseInt(req.params.bid, 10);
@@ -306,7 +274,6 @@ async listByBoat(req, res) {
 
     const where = { BID: boatId, parentWID: null };
 
-    // opcjonalny filtr AID – gdy chcemy prace tylko dla jednego przechowywania
     if (req.query.AID) {
       const aid = parseInt(req.query.AID, 10);
       if (Number.isNaN(aid)) {
@@ -348,10 +315,6 @@ async listByBoat(req, res) {
   }
 },
 
-
-  // ============================================================
-  // EMPLOYEE WORKS
-  // ============================================================
 async employeeWorks(req, res) {
   console.log("employeeWorks");
 
@@ -396,9 +359,6 @@ async employeeWorks(req, res) {
   }
 },
 
-  // ============================================================
-  // UPDATE STATE
-  // ============================================================
     async updateState(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -439,9 +399,6 @@ async employeeWorks(req, res) {
     }
   },
 
-  // ============================================================
-  // UPDATE WORK
-  // ============================================================
    async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -482,9 +439,6 @@ async employeeWorks(req, res) {
     }
   },
 
-  // ============================================================
-  // DELETE WORK
-  // ============================================================
   async delete(req, res) {
     const t = await sequelize.transaction();
     try {

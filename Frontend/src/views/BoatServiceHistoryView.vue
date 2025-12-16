@@ -122,13 +122,6 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 
-import Card from "primevue/card";
-import Button from "primevue/button";
-import DataTable from "primevue/datatable";
-import Column from "primevue/column";
-import Dropdown from "primevue/dropdown";
-import Calendar from "primevue/calendar";
-
 import { getFullServiceHistory } from "../services/workService";
 import { getBoat } from "../services/boatService";
 import { exportWorksToPdf } from "../utils/pdfExporter";
@@ -143,7 +136,6 @@ const boat = ref(null);
 const loading = ref(true);
 const works = ref([]);
 
-/* FILTERS */
 const filters = ref({
   employee: null,
   year: null,
@@ -151,7 +143,6 @@ const filters = ref({
   date: null
 });
 
-/* LOAD */
 onMounted(async () => {
   loading.value = true;
   works.value = await getFullServiceHistory(BID);
@@ -160,13 +151,12 @@ onMounted(async () => {
   loading.value = false;
 });
 
-/* EMPLOYEES */
 const employees = computed(() => {
   const map = new Map();
 
   works.value.forEach(w => {
     if (w.employeeName) {
-      const id = w.employeeID ?? w.employeeName; // fallback
+      const id = w.employeeID ?? w.employeeName;
       map.set(id, w.employeeName);
     }
   });
@@ -178,7 +168,6 @@ const employees = computed(() => {
 });
 
 
-/* YEARS */
 const years = computed(() => {
   const set = new Set();
 
@@ -194,7 +183,6 @@ const years = computed(() => {
 });
 
 
-/* MONTHS */
 const months = [
   { label: t("months.january"), value: 0 },
   { label: t("months.february"), value: 1 },
@@ -210,7 +198,6 @@ const months = [
   { label: t("months.december"), value: 11 }
 ];
 
-/* FILTER LOGIC */
 const filteredWorks = computed(() => {
   return works.value.filter(w => {
     const d = new Date(w.Date);
@@ -243,7 +230,6 @@ function clearFilters() {
 }
 
 
-/* UTILS */
 function formatDate(d) {
       if (!d) {
     return "-";
@@ -263,7 +249,6 @@ function sameDay(a, b) {
 function buildFiltersText() {
   const parts = [];
 
-  // employee
   if (filters.value.employee) {
     const emp = employees.value.find(
       e => e.value === filters.value.employee
@@ -273,12 +258,10 @@ function buildFiltersText() {
     }
   }
 
-  // year
   if (filters.value.year) {
     parts.push(`${t("common.year")}: ${filters.value.year}`);
   }
 
-  // month
   if (filters.value.month !== null) {
     const m = months.find(m => m.value === filters.value.month);
     if (m) {
@@ -286,7 +269,6 @@ function buildFiltersText() {
     }
   }
 
-  // exact date
   if (filters.value.date) {
     parts.push(
       `${t("common.date")}: ${filters.value.date.toLocaleDateString()}`
@@ -299,7 +281,6 @@ function buildFiltersText() {
 }
 
 
-/* PDF EXPORT */
 function exportPdf() {
   const owner = boat.value?.User
     ? `${boat.value.User.Name} ${boat.value.User.Lastname || ""}`.trim()
@@ -311,6 +292,4 @@ function exportPdf() {
     filtersText: buildFiltersText(),
   });
 }
-
-
 </script>

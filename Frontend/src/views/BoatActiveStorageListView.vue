@@ -137,12 +137,10 @@ const storages = ref([]);
 const deleteDialog = ref(false);
 const storageToDelete = ref(null);
 
-/* Date formatter */
 function formatDate(d) {
   return new Date(d).toLocaleDateString();
 }
 
-/* Load */
 async function loadStorages() {
   loading.value = true;
   try {
@@ -156,7 +154,6 @@ async function loadStorages() {
 
 onMounted(loadStorages);
 
-/* Active season filter */
 const today = new Date();
 
 const activeStorages = computed(() =>
@@ -171,12 +168,10 @@ const activeStorages = computed(() =>
 );
 
 
-/* Row click = open */
 function onRowClick(e) {
   goToStorage(e.data.AID);
 }
 
-/* Navigation */
 function goToStorage(AID) {
   router.push(`/home/storage/${AID}`);
 }
@@ -214,7 +209,6 @@ async function deleteConfirmed() {
 </script>
 
 <style scoped>
-/* opcjonalnie hover */
 .p-datatable tbody tr:hover {
   background: #f4f6f8;
 }

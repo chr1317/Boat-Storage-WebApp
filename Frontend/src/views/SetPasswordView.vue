@@ -47,10 +47,6 @@ import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 import { apiFetch } from "../services/apiClient";
 
-import Password from "primevue/password";
-import Button from "primevue/button";
-import Toast from "primevue/toast";
-
 const { t } = useI18n({ useScope: "global" });
 const route = useRoute();
 const router = useRouter();

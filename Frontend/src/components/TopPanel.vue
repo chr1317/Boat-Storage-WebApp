@@ -2,7 +2,6 @@
   <header
     class="flex items-center justify-between h-16 bg-white dark:bg-surface-800 px-4 md:px-6 shadow rounded-b-2xl"
   >
-    <!-- Lewa sekcja -->
     <div class="flex items-center gap-3 flex-1">
       <Button
         icon="pi pi-bars"
@@ -16,7 +15,6 @@
       </h1>
     </div>
 
-    <!-- Środek: logo -->
     <router-link
       to="/home/dashboard"
       class="flex items-center gap-2 select-none hover:cursor-pointer flex-shrink-0 justify-center"
@@ -33,9 +31,7 @@
       </span>
     </router-link>
 
-    <!-- Prawa sekcja -->
     <div class="flex items-center gap-3 flex-1 justify-end">
-      <!-- Desktop: język i motyw -->
       <div class="hidden md:flex items-center gap-3">
         <LangChanger />
         <Button
@@ -46,7 +42,6 @@
         />
       </div>
 
-      <!-- Mobile: przycisk ustawień -->
       <Button
         icon="pi pi-cog"
         text
@@ -56,7 +51,6 @@
       />
     </div>
 
-    <!-- 🔹 Mobile dialog -->
     <Dialog
   v-model:visible="showSettings"
   modal

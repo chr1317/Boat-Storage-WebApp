@@ -16,7 +16,6 @@
         'rounded-2xl'
       ]"
     >
-      <!-- wrapper, który ustawia top i bottom -->
       <div class="flex flex-col h-full">
         <!-- NAV -->
         <nav class="flex flex-col px-4 pt-6 gap-2 flex-1">
@@ -125,7 +124,6 @@
       
         </nav>
 
-        <!-- STOPKA -->
         <div class="p-4 border-t border-surface-200 dark:border-surface-700">
           <div class="flex flex-col items-center gap-2">
             <div class="flex items-center gap-2 text-sm">
@@ -159,7 +157,6 @@ const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-// ✅ globalny kontekst tłumaczeń
 const { t } = useI18n({ useScope: "global" });
 
 async function handleLogout() {

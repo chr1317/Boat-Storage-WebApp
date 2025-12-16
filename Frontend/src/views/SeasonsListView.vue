@@ -97,17 +97,12 @@ const dialog = ref(false);
 
 const startYear = ref(null);
 
-/* LOAD */
 onMounted(async () => {
   seasons.value = await getSeasons();
 });
 
-/* YEARS */
 const currentYear = new Date().getFullYear();
 
-/**
- * np. 2024 → tworzy sezon 2024/2025
- */
 const availableStartYears = computed(() => {
   const years = [];
   for (let y = currentYear - 2; y <= currentYear + 5; y++) {
@@ -120,7 +115,6 @@ const endYear = computed(() =>
   startYear.value ? startYear.value + 1 : "-"
 );
 
-/* CHECKS */
 const seasonExists = computed(() => {
   if (!startYear.value) return false;
   return seasons.value.some(
@@ -134,7 +128,6 @@ const canCreate = computed(() =>
   startYear.value && !seasonExists.value
 );
 
-/* ACTIONS */
 function openDialog() {
   startYear.value = null;
   dialog.value = true;

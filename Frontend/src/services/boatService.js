@@ -1,4 +1,3 @@
-// services/boatService.js
 import { apiFetch } from "./apiClient";
 
 export async function createBoat(data) {
@@ -32,23 +31,19 @@ export async function getBoatByQR(qrCode) {
 }
 
 
-// boatService.js
 export function getActiveStorageByQR(qr) {
   return apiFetch(`/boats/qr/${qr}/active-storage`);
 }
 
 
-// Historia prac dla łodzi (BID)
 export async function getBoatWorkHistory(id) {
   return await apiFetch(`/work/boat/${id}`);
 }
 
-// Historia problemów dla łodzi (BID)
 export async function getBoatProblemsHistory(id) {
   return await apiFetch(`/problems?BID=${id}`);
 }
 
-// Historia requestów wyjścia dla łodzi (BID)
 export async function getBoatOutRequestsHistory(id) {
   return await apiFetch(`/outRequests?BID=${id}`);
 }

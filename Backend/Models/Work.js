@@ -1,4 +1,3 @@
-// Backend/Models/Work.js
 module.exports = (sequelize, DataTypes) => {
   const Work = sequelize.define("Work", {
     WID: {

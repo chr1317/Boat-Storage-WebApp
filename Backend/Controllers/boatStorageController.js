@@ -1,4 +1,3 @@
-// controllers/boatStorageController.js
 const { models, sequelize } = require("../Database/db");
 const { QueryTypes } = require("sequelize");
 
@@ -101,7 +100,6 @@ async byBoat(req, res) {
 
     const isStaff = ["Admin", "Employee"].includes(req.user.role);
 
-    // 🔐 CLIENT: sprawdzamy własność łodzi
     if (!isStaff) {
       const boat = await models.Boats.findOne({
         where: {
@@ -115,7 +113,6 @@ async byBoat(req, res) {
       }
     }
 
-    // 📦 dane pobieramy BEZ ograniczeń
     const list = await models.BoatStorage.findAll({
       where: { BID },
       include: [
@@ -182,7 +179,6 @@ async getOne(req, res) {
 
     const isStaff = ["Admin", "Employee"].includes(req.user.role);
 
-    // 🔐 CLIENT → tylko jeśli to jego łódź
     if (!isStaff && rec.Boat.UID !== req.user.id) {
       return res.status(403).json({ error: "Forbidden" });
     }

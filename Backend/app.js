@@ -1,4 +1,3 @@
-// Backend/app.js
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
@@ -33,7 +32,6 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: process.env.NODE_ENV || "dev", time: new Date().toISOString() });
 });
 
-// automatyczne podpinanie routes/*
 const routesPath = path.join(__dirname, "routes");
 if (fs.existsSync(routesPath)) {
   fs.readdirSync(routesPath).forEach((file) => {
@@ -53,10 +51,8 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-// 🔥 export dla testów
 module.exports = app;
 
-// 🔥 normalny start tylko jeśli NIE test
 if (process.env.NODE_ENV !== "test") {
   (async () => {
     try {

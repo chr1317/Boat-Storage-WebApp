@@ -343,7 +343,6 @@ import {
 import { getServices } from "../../services/serviceService";
 import { getUsers } from "../../services/userService";
 
-// ✅ MUSI być przypisane do zmiennej
 const props = defineProps({
   problems: { type: Array, required: true },
   AID: { type: Number, required: false },
@@ -405,7 +404,6 @@ const workForm = ref({
   UID: null,
 });
 
-/* FILTERING */
 const filteredProblems = computed(() => {
   return props.problems.filter((p) => {
     return (
@@ -417,14 +415,12 @@ const filteredProblems = computed(() => {
   });
 });
 
-/* PAGINATION */
 const first = ref(0);
 const pageSize = 5;
 const pagedItems = computed(() =>
   filteredProblems.value.slice(first.value, first.value + pageSize)
 );
 
-/* LOAD SERVICES + WORKERS */
 onMounted(async () => {
   services.value = await getServices();
 
@@ -432,7 +428,6 @@ onMounted(async () => {
   workers.value = all.filter((u) => ["Admin", "Employee"].includes(u.Role));
 });
 
-/* ACTIONS */
 function openDetailsDialog(p) {
   selectedProblem.value = p;
   showDetailsDialog.value = true;

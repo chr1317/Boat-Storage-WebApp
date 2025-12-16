@@ -28,7 +28,6 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from "vue";
-import Dialog from "primevue/dialog";
 
 import Map from "ol/Map";
 import View from "ol/View";
@@ -132,7 +131,6 @@ function initMap() {
 
   mapInstance.vectorSource = vectorSource;
 
-  // Tooltip overlay
   tooltipOverlay = new Overlay({
     element: tooltipEl.value,
     offset: [10, 10],
@@ -171,7 +169,6 @@ function draw() {
 
   src.addFeature(hallFeature);
 
-  // Boats
   hallPositions.value.forEach((p) => {
     const px = Number(p.PosX) * SCALE;
     const py = Number(p.PosY) * SCALE;
@@ -235,7 +232,6 @@ function setupHoverTooltip() {
     }
   });
 
-  // mobile tap
   mapInstance.on("click", (evt) => {
     const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, (f) => f);
 

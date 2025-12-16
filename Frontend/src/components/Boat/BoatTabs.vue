@@ -20,11 +20,7 @@
 
 <script setup>
 import { useI18n } from "vue-i18n";
-import Tabs from "primevue/tabs";
-import Tab from "primevue/tab";
-import TabList from "primevue/tablist";
-import TabPanels from "primevue/tabpanels";
-import TabPanel from "primevue/tabpanel";
+
 
 import BoatInfoTab from "./BoatInfoTab.vue";
 import BoatDimensionsTab from "./BoatDimensionsTab.vue";

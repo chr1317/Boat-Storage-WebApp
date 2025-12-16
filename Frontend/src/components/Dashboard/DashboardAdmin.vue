@@ -119,7 +119,7 @@ onMounted(async () => {
   try {
     problems.value = await getProblems()
     const out = await getAllOutRequests()
-    pendingOutCount.value = out.filter(r => r.Status === "Pending").length
+    pendingOutCount.value = out.filter(r => r.status === "Pending").length
   } finally {
     loading.value = false
   }

@@ -12,13 +12,11 @@ onMounted(async () => {
   try {
         const res = await getBoatByQR(qr);
 
-    // 1️⃣ aktywne storage → storage view
     if (res?.AID) {
       router.replace(`/home/storage/${res.AID}`);
       return;
     }
 
-    // 2️⃣ fallback → łódka (jak wcześniej)
     router.replace(`/home/boats/${res.BID}`);
 
   } catch (err) {

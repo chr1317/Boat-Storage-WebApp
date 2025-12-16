@@ -87,8 +87,8 @@ const s = seasonDates();
 const season = await models.Seasons.create({
   year_start: s.yStart,
   year_end: s.yEnd,
-  startDate: s.startDate, // ← POPRAWNE
-  endDate: s.endDate,     // ← POPRAWNE
+  startDate: s.startDate,
+  endDate: s.endDate,
 });
 
 

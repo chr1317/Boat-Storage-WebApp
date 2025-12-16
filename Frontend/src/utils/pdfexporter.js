@@ -16,12 +16,10 @@ export function exportWorksToPdf(works, t, meta = {}) {
   doc.setFontSize(10);
   doc.text(`${t("common.generated_at")}: ${generatedAt}`, 20, 58);
 
-  // ✅ linia informacyjna (HIN + owner)
   if (meta.boatInfoLine) {
     doc.text(meta.boatInfoLine, 20, 74);
   }
 
-  // ✅ filtry
   let y = meta.boatInfoLine ? 90 : 74;
   if (meta.filtersText) {
     doc.text(`${t("common.filters")}: ${meta.filtersText}`, 20, y);
@@ -46,7 +44,7 @@ export function exportWorksToPdf(works, t, meta = {}) {
     const employee = w.employeeName || "-";
     const hours = w.HR ?? "-";
 
-    const state = translateState(w.State, t); // ✅ tłumaczenie statusu
+    const state = translateState(w.State, t);
     const comment = w.Comment || "-";
 
     const seasonLabel =
@@ -79,7 +77,6 @@ export function exportWorksToPdf(works, t, meta = {}) {
 }
 
 function translateState(state, t) {
-  // dopasuj klucze do swoich tłumaczeń:
   const map = {
     ToDo: "works.state_TODO",
     InProgress: "works.state_INPROGRESS",

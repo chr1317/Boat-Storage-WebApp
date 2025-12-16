@@ -21,7 +21,6 @@ function pick(body) {
 }
 
 module.exports = {
-  // POST /dimensions
   async create(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -73,7 +72,6 @@ module.exports = {
     }
   },
 
-  // GET /dimensions/:bid
   async getByBid(req, res) {
     try {
       const bid = parseInt(req.params.bid, 10);
@@ -98,7 +96,6 @@ module.exports = {
     }
   },
 
-  // PUT /dimensions/:bid
   async updateByBid(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -142,7 +139,6 @@ module.exports = {
     }
   },
 
-  // DELETE /dimensions/:bid
   async deleteByBid(req, res) {
     const t = await sequelize.transaction();
     try {

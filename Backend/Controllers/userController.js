@@ -7,10 +7,6 @@ const EDITABLE_FIELDS = [
 ];
 
 module.exports = {
-
-  // ======================================================
-  // GET ME
-  // ======================================================
   async getMe(req, res) {
     try {
       const me = await models.User.findByPk(req.user.id, {
@@ -23,9 +19,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // LIST ALL (ADMIN)
-  // ======================================================
   async list(req, res) {
     try {
       const users = await models.User.findAll({
@@ -39,9 +32,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // GET ONE
-  // ======================================================
   async getOne(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -60,9 +50,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // UPDATE ME
-  // ======================================================
   async updateMe(req, res) {
     try {
       const updates = {};
@@ -81,9 +68,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // UPDATE ANY / SELF
-  // ======================================================
   async update(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -117,9 +101,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // UPDATE PASSWORD (admin or user with oldPassword)
-  // ======================================================
   async updatePassword(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -156,9 +137,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // DELETE USER (ADMIN)
-  // ======================================================
   async delete(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -173,9 +151,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // CREATE USER (ADMIN)
-  // ======================================================
   async create(req, res) {
     try {
       const {
@@ -214,9 +189,6 @@ module.exports = {
     }
   },
 
-  // ======================================================
-  // SET PASSWORD (AFTER TEMP PASSWORD)
-  // ======================================================
   async setPassword(req, res) {
     try {
       const id = parseInt(req.params.id, 10);

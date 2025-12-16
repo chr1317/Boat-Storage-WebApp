@@ -29,7 +29,9 @@
     "month": "Month",
     "clear_filters": "Clear filters",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "set": "Set arrival date",
+    "change": "Change arrival date"
   },
   "validation": {
     "required": "Required"
@@ -155,13 +157,16 @@
     "storage_will_be_created": "Storage record will be created",
     "show_on_hall": "Show on hall",
     "generate_qr": "Generate QR code",
-    "go_to_details": "Go to details"
+    "go_to_details": "Go to details",
+    "not_in_hall": "Not in hall",
+    "hall": "Hall"
 
   },
   "clientBoats": {
     "title": "Boats",
     "status_in_hall": "In hall",
-    "no_boats": "No boats found"
+    "no_boats": "No boats found",
+    "status_reserved": "Scheduled departure"
   },
   "employee": {
     "works_title": "Your works",
@@ -283,7 +288,11 @@
     "reason": "Reject reason",
     "section_title": "Departure requests",
     "pending": "Pending",
-    "pending_approval": "pending approval"
+    "pending_approval": "pending approval",
+    "blocked_title": "Departure request blocked",
+    "blocked_pending": "You already have a pending request. Please wait for staff decision or cancel it before creating a new one.",
+    "blocked_accepted": "A departure date has already been accepted for this storage entry. You cannot create another request.",
+    "description": "Choose a departure type and preferred week. The final departure date will be confirmed by the staff."
   },
   "works": {
     "all_title": "Works",

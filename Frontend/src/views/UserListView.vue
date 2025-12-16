@@ -73,7 +73,6 @@
   :style="{ width: '90vw', maxWidth: '500px' }"
   class="custom-dialog"
 >
-  <!-- legenda wymaganych pól -->
   <p class="text-xs text-gray-500 mb-3">
     <span class="text-red-500">*</span> {{ t('common.required') || 'required fields' }}
   </p>
@@ -196,9 +195,6 @@ import { ref, onMounted, computed } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 import DynamicTable from "../components/DynamicTable.vue";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
 import * as userService from "../services/userService";
 
 const { t } = useI18n({ useScope: "global" });

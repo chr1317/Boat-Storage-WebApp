@@ -31,23 +31,13 @@
     </div>
   </div>
 
-  <BoatOutRequestForm
-    v-if="isClient"
-    :boat="boat"
-    class="mt-6"
-  />
 </template>
 
 <script setup>
 import { useI18n } from "vue-i18n";
-import BoatOutRequestForm from "./BoatOutRequestForm.vue"; // 🔥 DODAJ
-import { computed } from "vue";
-import { useAuthStore } from "../../stores/auth";
+
 
 const { t } = useI18n({ useScope: "global" });
-
-const auth = useAuthStore();
-const isClient = computed(() => auth.user?.Role === "Client"); // 🔥 LOGIKA
 
 defineProps({
   boat: Object

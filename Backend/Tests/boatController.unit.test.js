@@ -1,11 +1,21 @@
 const mockResponse = require("./mockRes");
 
-// 🔹 mock uuid, żeby nie wysypywał się ESM i żeby QR był deterministyczny
 jest.mock("uuid", () => ({
   v4: jest.fn(() => "fake-qr-code"),
 }));
 
-// 🔹 mock Database/db z globalną transakcją
+jest.mock("sequelize", () => {
+  const actual = jest.requireActual("sequelize");
+  return {
+    ...actual,
+    Op: {
+      lte: Symbol("lte"),
+      gte: Symbol("gte"),
+    },
+  };
+});
+
+
 jest.mock("../Database/db", () => {
   const mockTransaction = {
     commit: jest.fn(),
@@ -44,6 +54,10 @@ jest.mock("../Database/db", () => {
       Boathalls: {
         findByPk: jest.fn(),
       },
+      BoatStorage: {
+        findOne: jest.fn(), 
+      },
+
 
       BoatPosition: {
         findAll: jest.fn(),
@@ -383,16 +397,22 @@ describe("boatsController.getBoatByQR", () => {
   });
 
   it("returns boat when allowed", async () => {
-    const req = { params: { qr: "abc" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
+  const req = { params: { qr: "abc" }, user: { role: "Admin", id: 1 } };
+  const res = mockResponse();
 
-    const boat = { BID: 1, UID: 999 };
-    models.Boats.findOne.mockResolvedValue(boat);
+  const boat = { BID: 1, UID: 999 };
 
-    await boatsController.getBoatByQR(req, res);
+  models.Boats.findOne.mockResolvedValue(boat);
+  models.BoatStorage.findOne.mockResolvedValue(null); 
 
-    expect(res.json).toHaveBeenCalledWith(boat);
+  await boatsController.getBoatByQR(req, res);
+
+  expect(res.json).toHaveBeenCalledWith({
+    boat,
+    activeStorage: null,
   });
+});
+
 
   it("returns 500 on error", async () => {
     const req = { params: { qr: "abc" }, user: { role: "Admin", id: 1 } };
@@ -698,5 +718,116 @@ describe("boatsController.setOut", () => {
     expect(res.json).toHaveBeenCalledWith({
       error: "Server error while setting out",
     });
+  });
+
+  
+});
+
+describe("boatsController.getBoatQRContext", () => {
+  it("400 when QR missing", async () => {
+    const req = {
+      params: {},
+      user: { role: "Admin", id: 1 },
+    };
+    const res = mockResponse();
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: "Missing QR" });
+  });
+
+  it("404 when boat not found", async () => {
+    const req = {
+      params: { qr: "abc" },
+      user: { role: "Admin", id: 1 },
+    };
+    const res = mockResponse();
+
+    models.Boats.findOne.mockResolvedValue(null);
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: "Boat not found" });
+  });
+
+  it("403 when client not owner", async () => {
+    const req = {
+      params: { qr: "abc" },
+      user: { role: "Client", id: 1 },
+    };
+    const res = mockResponse();
+
+    models.Boats.findOne.mockResolvedValue({
+      BID: 10,
+      UID: 999,
+    });
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
+  });
+
+  it("returns BID and AID when active storage exists", async () => {
+    const req = {
+      params: { qr: "abc" },
+      user: { role: "Client", id: 5 },
+    };
+    const res = mockResponse();
+
+    models.Boats.findOne.mockResolvedValue({
+      BID: 10,
+      UID: 5,
+    });
+
+    models.BoatStorage.findOne.mockResolvedValue({
+      AID: 77,
+    });
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.json).toHaveBeenCalledWith({
+      BID: 10,
+      AID: 77,
+    });
+  });
+
+  it("returns BID and null AID when no active storage", async () => {
+    const req = {
+      params: { qr: "abc" },
+      user: { role: "Admin", id: 1 },
+    };
+    const res = mockResponse();
+
+    models.Boats.findOne.mockResolvedValue({
+      BID: 10,
+      UID: 999,
+    });
+
+    models.BoatStorage.findOne.mockResolvedValue(null);
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.json).toHaveBeenCalledWith({
+      BID: 10,
+      AID: null,
+    });
+  });
+
+  it("500 on unexpected error", async () => {
+    const req = {
+      params: { qr: "abc" },
+      user: { role: "Admin", id: 1 },
+    };
+    const res = mockResponse();
+
+    models.Boats.findOne.mockRejectedValue(new Error("db"));
+
+    await boatsController.getBoatQRContext(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: "QR context error" });
   });
 });

@@ -13,7 +13,7 @@
 
     <div v-else class="flex flex-col gap-4">
 
-      <!-- 🔹 Select SERVICE -->
+      <!-- Select SERVICE -->
       <div>
         <label class="font-semibold block mb-1">{{ t('boat.select_service') }}</label>
 
@@ -28,7 +28,7 @@
         />
       </div>
 
-      <!-- 🔹 Select WORKER -->
+      <!-- Select WORKER -->
       <div>
         <label class="font-semibold block mb-1">{{ t('boat.select_worker') }}</label>
 
@@ -50,13 +50,13 @@
         </Dropdown>
       </div>
 
-      <!-- 🔹 Comment -->
+      <!--  Comment -->
       <div>
         <label class="font-semibold block mb-1">{{ t('boat.comment') }}</label>
         <Textarea v-model="form.Comment" rows="3" class="w-full" autoResize />
       </div>
 
-      <!-- 🔹 Hours (optional) -->
+      <!--  Hours (optional) -->
       <div>
         <label class="font-semibold block mb-1">Hours (optional)</label>
         <InputNumber v-model="form.HR" class="w-full" />

@@ -1,10 +1,8 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "../stores/auth";
 
-// layout (z TopPanel + SidePanel + <router-view/>)
 import HomeView from "../views/HomeView.vue";
 
-// widoki – wszystko na ścieżkach względnych
 const LoginView = () => import("../views/LoginView.vue");
 const BoatListView = () => import("../views/BoatListView.vue");
 const BoatDetailsView = () => import("../views/BoatDetailsView.vue");
@@ -43,7 +41,6 @@ const routes = [
     component: SetPasswordView,
   }, 
 
-  // <-- Layout
   {
   path: "/home",
   component: HomeView,

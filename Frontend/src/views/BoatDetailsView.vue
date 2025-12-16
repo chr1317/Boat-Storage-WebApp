@@ -56,32 +56,46 @@
     </Card>
 
     <!-- MAP BUTTON -->
+     <div class="flex justify-end gap-2">
+
+  <!-- SHOW ON HALL -->
+  <Button
+    v-if="boat?.Boathall && isStaff"
+    icon="pi pi-map"
+    :label="!isMobile ? t('boat.show_on_hall') : null"
+    text
+    severity="info"
+    @click="showMap = true"
+  />
+
+  <!-- GENERATE QR -->
+  <Button
+    v-if="isAdmin && !isMobile"
+    icon="pi pi-qrcode"
+    :label="!isMobile ? t('boat.generate_qr') : null"
+    text
+    severity="info"
+    @click="showQRDialog = true"
+  />
+
+  <!-- EDIT -->
+  <Button
+    v-if="isStaff"
+    icon="pi pi-pencil"
+    :label="!isMobile ? 'Edit' : null"
+    severity="info"
+    @click="editDialogVisible = true"
+  />
+
+</div>
+
      <div>
-    <div v-if="boat?.Boathall && isStaff" class="flex justify-end">
-      <Button
-        icon="pi pi-map"
-        :label="t('boat.show_on_hall')"
-        outlined
-        severity="info"
-        @click="showMap = true"
-      />
+
       <BoatHallMiniMap
         v-model:visible="showMap"
         :boatId="boat?.BID"
         :bhid="boat?.Boathall?.BHID"
       />
-    </div>
-
-    <!-- QR BUTTON -->
-    <div v-if="isAdmin && !isMobile" class="flex justify-end">
-      <Button
-        icon="pi pi-qrcode"
-        :label="t('boat.generate_qr')"
-        outlined
-        severity="info"
-        @click="showQRDialog = true"
-      />
-    </div>
 
     <BoatQRDialog
       v-if="boat"
@@ -89,6 +103,13 @@
       :boat="boat"
     />
     </div>
+
+    <EditBoatInfoDialog
+      v-if="boat"
+      v-model:visible="editDialogVisible"
+      :boat="boat"
+      @updated="reloadBoat"
+    />
 
     <!-- TABS -->
     <TabView v-if="boat" v-model:activeIndex="activeTab" class="mt-4">
@@ -167,7 +188,7 @@
       @click="goToHistory"
     />
 
-    <!-- ASSIGN DIALOG (NAPRAWIONY) -->
+    <!-- ASSIGN DIALOG -->
     <Dialog
       v-if="isStaff"
       v-model:visible="assignDialog"
@@ -182,12 +203,10 @@
           {{ t("season.assign_info", { boat: boat?.name || "-" }) }}
         </div>
 
-        <!-- Jeśli brak sezonów do przypisania -->
         <div v-if="availableSeasons.length === 0" class="text-center text-gray-600 py-2">
           {{ t("season.no_available") }}
         </div>
 
-        <!-- Dropdown PrimeVue -->
         <Dropdown
           v-else
           v-model="selectedSeason"
@@ -225,19 +244,12 @@ import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "../stores/auth";
 
-import Card from "primevue/card";
-import Tag from "primevue/tag";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import Dropdown from "primevue/dropdown";
-import TabView from "primevue/tabview";
-import TabPanel from "primevue/tabpanel";
-
 import BoatQRDialog from "../components/Boat/BoatQRDialog.vue";
 import BoatHallMiniMap from "../components/Boat/BoatHallMiniMap.vue";
 
 import BoatInfoTab from "../components/Boat/BoatInfoTab.vue";
 import BoatEngineTab from "../components/Boat/BoatEngineTab.vue";
+import EditBoatInfoDialog from "../components/Boat/EditBoatInfoDialog.vue";
 
 import { getBoat } from "../services/boatService";
 import { getBoatStorageByBoat, createBoatStorage } from "../services/boatStorageService";
@@ -269,15 +281,20 @@ const isStaff = computed(() => ["Admin", "Employee"].includes(auth.user?.Role));
 const isMobile = computed(() => window.innerWidth < 768);
 
 const today = new Date();
+const editDialogVisible = ref(false);
 
-/* SEASON LABEL */
+async function reloadBoat() {
+  boat.value = await getBoat(route.params.id);
+}
+
+
+
 function seasonLabel(s) {
   if (!s) return "-";
   return `${s.year_start}/${s.year_end}`;
 }
 
 
-/* LOAD CONTENT */
 onMounted(async () => {
   try {
     const id = route.params.id;
@@ -292,7 +309,6 @@ onMounted(async () => {
   }
 });
 
-/* ACTIVE STORAGE */
 const activeStorage = computed(() =>
   storages.value.find((s) => {
     if (!s.season) return false;
@@ -315,9 +331,7 @@ const nextSeasons = computed(() =>
     }))
 );
 
-/**
- * ✅ Dropdown expects {label, seasonID}
- */
+
 const availableSeasons = computed(() =>
   seasons.value
     .filter((s) => !storages.value.some((st) => st.seasonID === s.seasonID))
@@ -327,7 +341,6 @@ const availableSeasons = computed(() =>
     }))
 );
 
-/* NAV */
 function goToStorage(AID) {
   router.push(`/home/storage/${AID}`);
 }
@@ -336,7 +349,6 @@ function goToHistory() {
   router.push(`/home/boat/${boat.value.BID}/history`);
 }
 
-/* ASSIGN */
 function openAssignDialog() {
   selectedSeason.value = null;
   assignDialog.value = true;
@@ -355,7 +367,6 @@ async function confirmAssign() {
   }
 }
 
-/* SORTED STORAGES: active → future → past */
 const sortedStorages = computed(() => {
   return [...storages.value].sort((a, b) => {
     const aStart = new Date(a.Season.startDate);
@@ -365,7 +376,6 @@ const sortedStorages = computed(() => {
 });
 
 
-/* STORAGE STATUS */
 function storageStatusLabel(s) {
   const start = new Date(s.Season.startDate);
   const end = new Date(s.Season.endDate);
@@ -376,7 +386,6 @@ function storageStatusLabel(s) {
 }
 
 
-/* STORAGE COLOR */
 function storageClass(s) {
   const start = new Date(s.Season.startDate);
   const end = new Date(s.Season.endDate);

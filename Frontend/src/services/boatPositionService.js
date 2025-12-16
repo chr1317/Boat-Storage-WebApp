@@ -1,4 +1,3 @@
-// src/services/boatPositionService.js
 import { apiFetch } from "./apiClient";
 
 export function getHallPositions(bhid) {
@@ -28,3 +27,8 @@ export function deleteBoatPosition(bid) {
     method: "DELETE",
   });
 }
+
+export function simulateHallPositions(bhid) {
+  return apiFetch(`/BoatPositions/hall/${bhid}/simulate`);
+}
+

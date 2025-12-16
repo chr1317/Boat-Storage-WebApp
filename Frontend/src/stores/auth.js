@@ -34,12 +34,10 @@ export const useAuthStore = defineStore("auth", {
   try {
     const res = await login(Email, Password);
 
-    // 🔹 Jeśli backend mówi, że trzeba zmienić hasło, NIE loguj jeszcze
     if (res.mustChangePassword) {
-      return res; // zwróć do LoginForm.vue
+      return res;
     }
 
-    // 🔹 Normalny login
     await this.fetchMe();
     return { success: true };
   } catch (err) {

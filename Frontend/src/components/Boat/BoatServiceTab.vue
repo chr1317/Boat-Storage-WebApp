@@ -308,7 +308,6 @@ onMounted(async () => {
   );
 });
 
-/* PERMISSIONS */
 const isAdminOrEmployee = computed(() =>
   ["Admin", "Employee"].includes(auth.user?.Role)
 );
@@ -325,7 +324,6 @@ const canChangeHours = computed(() =>
   selectedWork.value.State !== "Done"
 );
 
-/* OPTIONS */
 const stateOptions = [
   { label: t("works.state_TODO"), value: "ToDo" },
   { label: t("works.state_INPROGRESS"), value: "InProgress" },
@@ -334,7 +332,6 @@ const stateOptions = [
 
 
 
-/* ACTIONS */
 function openManageDialog(work) {
   selectedWork.value = work;
   editState.value = work.State;

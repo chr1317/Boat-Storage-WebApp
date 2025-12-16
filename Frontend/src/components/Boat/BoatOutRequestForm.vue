@@ -1,15 +1,33 @@
 <template>
   <div class="mt-6 border-t pt-4">
-    <h3 class="text-lg font-semibold mb-2">
+    <h3 class="text-lg font-semibold mb-1">
       {{ t("outRequest.title") }}
     </h3>
 
-    <p class="text-sm text-gray-500 mb-3">
-      {{ t("outRequest.help") }}
+    <p class="text-sm text-gray-500 mb-4 max-w-2xl">
+      {{ t("outRequest.description") }}
     </p>
 
+    <div v-if="hasAccepted || hasPending" class="mb-4">
+  <hr class="mb-3" />
+
+  <p class="text-sm text-gray-600">
+    <strong>
+      {{ t("outRequest.blocked_title") }}
+    </strong>
+    <br />
+    <span v-if="hasAccepted">
+      {{ t("outRequest.blocked_accepted") }}
+    </span>
+    <span v-else>
+      {{ t("outRequest.blocked_pending") }}
+    </span>
+  </p>
+</div>
+
+
     <!-- FORM -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
       <!-- TYPE -->
       <div>
@@ -22,12 +40,11 @@
           optionLabel="label"
           optionValue="value"
           class="w-full"
-          placeholder="Select type"
           @change="form.week = null"
         />
       </div>
 
-      <!-- WEEK SELECTOR -->
+      <!-- WEEK -->
       <div>
         <label class="block text-sm font-semibold mb-1">
           {{ t("outRequest.week") }}
@@ -39,13 +56,12 @@
           optionLabel="label"
           optionValue="value"
           class="w-full"
-          placeholder="Select week"
           :disabled="weekOptions.length === 0"
         />
 
-        <small class="text-xs text-gray-500">
-          {{ t("outRequest.week_hint") }}
-        </small>
+        <p class="text-xs text-gray-500 mt-1">
+          Select a preferred week (7 days).
+        </p>
       </div>
 
       <!-- COMMENT -->
@@ -60,18 +76,19 @@
           class="w-full"
         />
       </div>
+
+      <!-- SUBMIT -->
+      <div class="md:col-span-2 flex justify-end">
+        <Button
+          :label="t('outRequest.send')"
+          icon="pi pi-send"
+          :disabled="!canSubmit"
+          @click="submit"
+        />
+      </div>
     </div>
 
-    <!-- SUBMIT -->
-    <div class="flex justify-end mt-4">
-      <Button
-        :label="t('outRequest.send')"
-        icon="pi pi-send"
-        @click="submit"
-      />
-    </div>
-
-    <!-- CLIENT REQUESTS -->
+    <!-- MY REQUESTS -->
     <div v-if="requests.length" class="mt-6">
       <h4 class="text-md font-semibold mb-2">
         {{ t("outRequest.my_requests") }}
@@ -89,25 +106,22 @@
             <Tag :value="data.status" :severity="statusColor(data.status)" />
           </template>
         </Column>
-        <Column field="rejectReason" :header="t('outRequest.reason')">
-            <template #body="{ data }">
-                {{ data.rejectReason ? data.rejectReason : "—" }}
-            </template>
-        </Column>
 
         <Column :header="t('outRequest.week')">
           <template #body="{ data }">
-            {{ data.preferredWeekStart }} – {{ data.preferredWeekEnd }}
+            {{ toDDMMYYYY(data.preferredWeekStart) }}
+            –
+            {{ toDDMMYYYY(data.preferredWeekEnd) }}
           </template>
         </Column>
 
         <Column field="confirmedDate" :header="t('outRequest.confirmedDate')">
           <template #body="{ data }">
-            {{ data.confirmedDate ? new Date(data.confirmedDate).toLocaleDateString() : "—" }}
+            {{ data.confirmedDate ? toDDMMYYYY(data.confirmedDate) : "—" }}
           </template>
         </Column>
 
-        <Column :header="t('outRequest.actions')" style="width: 120px">
+        <Column :header="t('outRequest.actions')" style="width: 140px">
           <template #body="{ data }">
             <Button
               v-if="data.status === 'Pending'"
@@ -137,180 +151,162 @@ import {
 } from "../../services/outRequestService";
 
 const props = defineProps({
-  boat: { type: Object, required: true },
+  AID: { type: Number, required: true },
+  season: { type: Object, required: true },
 });
-
-const rejectedWeeks = computed(() =>
-  requests.value
-    .filter(r => r.status === "Rejected")
-    .map(r => ({
-      start: new Date(r.preferredWeekStart),
-      end: new Date(r.preferredWeekEnd),
-    }))
-);
 
 const toast = useToast();
 const { t } = useI18n({ useScope: "global" });
 const auth = useAuthStore();
 
+const isClient = computed(() => auth.user?.Role === "Client");
+
 const form = ref({
   type: "Launch",
-  week: null, // { start, end }
+  week: null,
   comment: "",
 });
 
 const requests = ref([]);
-
-const START_MONTH = 4; // April
-const END_MONTH = 9;   // September
-
-const MIN_DAYS_LAUNCH_WITH_WORKS = 21;
-const MIN_DAYS_LAUNCH_NO_WORKS = 7;
-const MIN_DAYS_TRAILER = 3;
-
 
 const typeOptions = [
   { label: "Launch (water)", value: "Launch" },
   { label: "Trailer pickup", value: "Trailer" },
 ];
 
-const isClient = computed(() => auth.user?.Role === "Client");
+const hasAccepted = computed(() =>
+  requests.value.some(r => r.status === "Accepted")
+);
 
-function getWeekNumber(d) {
-  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-  return weekNo;
+const hasPending = computed(() =>
+  requests.value.some(r => r.status === "Pending")
+);
+
+const canSubmit = computed(() =>
+  isClient.value &&
+  !hasAccepted.value &&
+  !hasPending.value &&
+  !!form.value.week
+);
+
+function formatLocalDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
-function getWeekStartDate(y, w) {
-  const simple = new Date(y, 0, 1 + (w - 1) * 7);
-  const dow = simple.getDay();
-  const ISOweekStart = simple;
-  if (dow <= 4)
-    ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-  else
-    ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-  ISOweekStart.setHours(0, 0, 0, 0);
-  return ISOweekStart;
-}
 
-function getWeekOptions() {
-  const currentYear = new Date().getFullYear();
-  const years = [currentYear, currentYear + 1];
-
-  const out = [];
-
-  for (const year of years) {
-    for (let w = 1; w <= 53; w++) {
-      const start = getWeekStartDate(year, w);
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      if (start.getFullYear() !== year) continue;
-
-      out.push({
-        label: `Week ${w} (${year}): ${start.toISOString().slice(0,10)} - ${end.toISOString().slice(0,10)}`,
-        value: { week: w, start, end, year }
-      });
-    }
+function toDDMMYYYY(v) {
+  if (!v) return "—";
+  const datePart = v.includes("T") ? v.split("T")[0] : v;
+  if (datePart.includes("-")) {
+    const [yyyy, mm, dd] = datePart.split("-");
+    return `${dd}.${mm}.${yyyy}`;
   }
-
-  return out;
+  return datePart;
 }
 
+const outYear = computed(() =>
+  new Date(props.season.endDate).getFullYear()
+);
 
-function weekOverlapsSeason(start, end) {
-  const s = start.getMonth() + 1;
-  const e = end.getMonth() + 1;
-
-  if (e < START_MONTH) return false;
-  if (s > END_MONTH) return false;
-
-  return true;
-}
-
-function daysBetween(a, b) {
-  const s = new Date(a); s.setHours(0,0,0,0);
-  const t = new Date(b); t.setHours(0,0,0,0);
-  return Math.floor((t - s) / 86400000);
-}
+const rejectedWeeks = computed(() =>
+  new Set(
+    requests.value
+      .filter(r => r.status === "Rejected")
+      .map(r => `${r.type}|${r.preferredWeekStart}`)
+  )
+);
 
 const weekOptions = computed(() => {
-  const all = getWeekOptions();
-  const today = new Date();
+  if (!props.season?.startDate || !props.season?.endDate) return [];
 
-  return all.filter(w => {
-    const start = w.value.start;
-    const end = w.value.end;
+  const seasonStart = new Date(props.season.startDate);
+  const seasonEnd = new Date(props.season.endDate);
+  const targetYear = outYear.value;
 
-    // 1. Launch → tylko sezon
-    if (form.value.type === "Launch" && !weekOverlapsSeason(start, end))
-      return false;
+  seasonStart.setHours(0,0,0,0);
+  seasonEnd.setHours(0,0,0,0);
 
-    // 2. minimalny lead time
-    let minDays = MIN_DAYS_TRAILER;
-    if (form.value.type === "Launch") minDays = MIN_DAYS_LAUNCH_NO_WORKS;
+  const weeks = [];
+  let current = new Date(seasonStart);
 
-    if (daysBetween(today, start) < minDays)
-      return false;
+  const day = current.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  current.setDate(current.getDate() + diff);
 
-    // 3. BLOKADA ODRZUCONYCH TYGODNI
-    if (rejectedWeeks.value.some(r =>
-      r.start.getTime() === start.getTime() &&
-      r.end.getTime() === end.getTime()
-    )) {
-      return false;
+  while (current <= seasonEnd) {
+    const start = new Date(current);
+    const end = new Date(current);
+    end.setDate(start.getDate() + 6);
+
+    if (start.getFullYear() !== targetYear) {
+      current.setDate(current.getDate() + 7);
+      continue;
     }
 
-    return true;
-  });
+    if (end < seasonStart || start > seasonEnd) {
+      current.setDate(current.getDate() + 7);
+      continue;
+    }
+
+    if (form.value.type === "Launch") {
+      const month = start.getMonth() + 1;
+      if (month < 4 || month > 9) {
+        current.setDate(current.getDate() + 7);
+        continue;
+      }
+    }
+
+    const key = `${form.value.type}|${formatLocalDate(start)}`;
+    if (rejectedWeeks.value.has(key)) {
+      current.setDate(current.getDate() + 7);
+      continue;
+    }
+
+    weeks.push({
+      label: `${formatLocalDate(start)} – ${formatLocalDate(end)}`,
+      value: { start, end },
+    });
+
+    current.setDate(current.getDate() + 7);
+  }
+
+  return weeks;
 });
 
 async function loadRequests() {
   if (!isClient.value) return;
   const all = await getMyOutRequests();
-  requests.value = all.filter(r => r.BID === props.boat.BID);
+  requests.value = all.filter(r => r.AID === props.AID);
 }
+
 onMounted(loadRequests);
 
-function statusColor(s) {
-  switch (s) {
-    case "Pending": return "warning";
-    case "Accepted": return "success";
-    case "Rejected": return "danger";
-    case "Cancelled": return "secondary";
-    default: return null;
-  }
-}
-
 async function submit() {
-  if (!isClient.value) {
-    toast.add({ severity: "error", summary: t("common.error"), detail: t("outRequest.only_client") });
-    return;
-  }
-
-  if (!form.value.week) {
-    toast.add({ severity: "error", summary: t("common.error"), detail: t("outRequest.week_required") });
-    return;
-  }
-
-  const { start, end } = form.value.week;
-
   try {
+    if (hasAccepted.value) return;
+    if (hasPending.value) return;
+
+    const { start, end } = form.value.week;
+
     await createOutRequest({
-      BID: props.boat.BID,
+      AID: props.AID,
       type: form.value.type,
-      preferredWeekStart: start.toISOString().slice(0,10),
-      preferredWeekEnd: end.toISOString().slice(0,10),
+      preferredWeekStart: formatLocalDate(start),
+      preferredWeekEnd: formatLocalDate(end),
       comment: form.value.comment || null,
     });
 
-    toast.add({ severity: "success", summary: t("common.success"), detail: t("outRequest.created") });
+    toast.add({
+      severity: "success",
+      summary: t("common.success"),
+      detail: t("outRequest.created"),
+    });
 
-    form.value.comment = "";
     form.value.week = null;
+    form.value.comment = "";
     await loadRequests();
-
   } catch (err) {
     toast.add({
       severity: "error",
@@ -321,13 +317,15 @@ async function submit() {
 }
 
 async function cancel(id) {
-  if (!confirm(t("outRequest.confirm_cancel"))) return;
+  if (!confirm(t("outRequest.confirm_cancel") || "Cancel this request?")) return;
+  await cancelOutRequest(id);
+  await loadRequests();
+}
 
-  try {
-    await cancelOutRequest(id);
-    await loadRequests();
-  } catch {
-    toast.add({ severity: "error", summary: t("common.error"), detail: t("outRequest.cancel_failed") });
-  }
+function statusColor(s) {
+  return s === "Pending" ? "warning"
+       : s === "Accepted" ? "success"
+       : s === "Rejected" ? "danger"
+       : "secondary";
 }
 </script>

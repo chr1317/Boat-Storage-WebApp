@@ -1,4 +1,3 @@
-// Backend/Models/User.js
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
     UID: {

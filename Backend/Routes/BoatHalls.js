@@ -1,4 +1,3 @@
-// Backend/Routes/BoatHalls.js
 const express = require("express");
 const auth = require("../Middleware/Auth");
 const BoatHallsController = require("../Controllers/boatHallsController");

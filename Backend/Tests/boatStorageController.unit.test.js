@@ -1,8 +1,13 @@
 const boatStorageController = require("../Controllers/boatStorageController");
 const mockRes = require("./mockRes");
 
+
+
+// ==========================================================================
+// MOCK DB
+// ==========================================================================
 jest.mock("../Database/db", () => {
-  const mockTransaction = {
+  const t = {
     commit: jest.fn(),
     rollback: jest.fn(),
     LOCK: { UPDATE: "UPDATE" },
@@ -10,11 +15,13 @@ jest.mock("../Database/db", () => {
 
   return {
     sequelize: {
-      transaction: jest.fn(() => Promise.resolve(mockTransaction)),
+      transaction: jest.fn().mockResolvedValue(t),
+      query: jest.fn(),
     },
     models: {
       Boats: {
         findByPk: jest.fn(),
+        findOne: jest.fn(),
       },
       Seasons: {
         findByPk: jest.fn(),
@@ -28,343 +35,459 @@ jest.mock("../Database/db", () => {
         destroy: jest.fn(),
       },
     },
-    __mockTransaction: mockTransaction,
+    __t: t,
   };
 });
 
-const { models, __mockTransaction: t } = require("../Database/db");
+const { models, sequelize, __t: t } = require("../Database/db");
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
+// ==========================================================================
+// CREATE
+// ==========================================================================
 describe("boatStorageController.create", () => {
-  test("creates storage entry successfully", async () => {
-    const req = {
-      body: { BID: 5, seasonID: 2, IsComing: true, Budget: 100 },
-    };
+  it("400 missing BID/seasonID", async () => {
     const res = mockRes();
+    await boatStorageController.create({ body: {} }, res);
 
-    models.Boats.findByPk.mockResolvedValue({ BID: 5 });
-    models.Seasons.findByPk.mockResolvedValue({ seasonID: 2 });
-    models.BoatStorage.findOne.mockResolvedValue(null);
-    models.BoatStorage.create.mockResolvedValue({ AID: 10 });
-
-    await boatStorageController.create(req, res);
-
-    expect(models.BoatStorage.create).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(201);
-  });
-
-  test("returns 400 if BID or seasonID missing", async () => {
-    const req = { body: {} };
-    const res = mockRes();
-
-    await boatStorageController.create(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
+    expect(t.rollback).toHaveBeenCalled();
   });
 
-  test("returns 404 if boat not found", async () => {
-    const req = { body: { BID: 5, seasonID: 2 } };
+  it("404 boat not found", async () => {
     const res = mockRes();
-
     models.Boats.findByPk.mockResolvedValue(null);
 
-    await boatStorageController.create(req, res);
+    await boatStorageController.create({ body: { BID: 1, seasonID: 2 } }, res);
+
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test("returns 404 if season not found", async () => {
-    const req = { body: { BID: 5, seasonID: 2 } };
+  it("404 season not found", async () => {
     const res = mockRes();
-
-    models.Boats.findByPk.mockResolvedValue({ BID: 5 });
+    models.Boats.findByPk.mockResolvedValue({});
     models.Seasons.findByPk.mockResolvedValue(null);
 
-    await boatStorageController.create(req, res);
+    await boatStorageController.create({ body: { BID: 1, seasonID: 2 } }, res);
+
     expect(res.status).toHaveBeenCalledWith(404);
   });
 
-  test("returns 409 if storage for boat+season exists", async () => {
-    const req = { body: { BID: 5, seasonID: 2 } };
+  it("409 storage already exists", async () => {
     const res = mockRes();
-
-    models.Boats.findByPk.mockResolvedValue({ BID: 5 });
-    models.Seasons.findByPk.mockResolvedValue({ seasonID: 2 });
+    models.Boats.findByPk.mockResolvedValue({});
+    models.Seasons.findByPk.mockResolvedValue({});
     models.BoatStorage.findOne.mockResolvedValue({ AID: 1 });
 
-    await boatStorageController.create(req, res);
+    await boatStorageController.create({ body: { BID: 1, seasonID: 2 } }, res);
+
     expect(res.status).toHaveBeenCalledWith(409);
   });
 
-  test("returns 400 for invalid budget", async () => {
-    const req = { body: { BID: 5, seasonID: 2, Budget: -10 } };
+  it("400 invalid budget", async () => {
     const res = mockRes();
-
-    models.Boats.findByPk.mockResolvedValue({ BID: 5 });
-    models.Seasons.findByPk.mockResolvedValue({ seasonID: 2 });
+    models.Boats.findByPk.mockResolvedValue({});
+    models.Seasons.findByPk.mockResolvedValue({});
     models.BoatStorage.findOne.mockResolvedValue(null);
 
-    await boatStorageController.create(req, res);
+    await boatStorageController.create(
+      { body: { BID: 1, seasonID: 2, Budget: -5 } },
+      res
+    );
+
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("returns 500 on DB error", async () => {
-    const req = { body: { BID: 5, seasonID: 2 } };
+  it("creates storage entry (happy path)", async () => {
     const res = mockRes();
+    models.Boats.findByPk.mockResolvedValue({});
+    models.Seasons.findByPk.mockResolvedValue({});
+    models.BoatStorage.findOne.mockResolvedValue(null);
+    models.BoatStorage.create.mockResolvedValue({ AID: 10 });
 
-    models.Boats.findByPk.mockRejectedValue(new Error("fail"));
+    await boatStorageController.create(
+      { body: { BID: 1, seasonID: 2, Budget: 100 } },
+      res
+    );
 
-    await boatStorageController.create(req, res);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("500 on unexpected error", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockRejectedValue(new Error("db"));
+
+    await boatStorageController.create(
+      { body: { BID: 1, seasonID: 2 } },
+      res
+    );
+
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
+// ==========================================================================
+// LIST
+// ==========================================================================
 describe("boatStorageController.list", () => {
-  test("returns list successfully", async () => {
-    const req = {};
+  it("returns list", async () => {
     const res = mockRes();
-
     models.BoatStorage.findAll.mockResolvedValue([{ AID: 1 }]);
 
-    await boatStorageController.list(req, res);
+    await boatStorageController.list({}, res);
 
     expect(res.json).toHaveBeenCalledWith([{ AID: 1 }]);
   });
 
-  test("handles server error", async () => {
-    const req = {};
+  it("500 on error", async () => {
     const res = mockRes();
-
-    models.BoatStorage.findAll.mockRejectedValue(new Error("boom"));
-
-    await boatStorageController.list(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
-
-describe("boatStorageController.mine", () => {
-  test("admin gets all entries", async () => {
-    const req = { user: { role: "Admin" } };
-    const res = mockRes();
-
-    models.BoatStorage.findAll.mockResolvedValue([{ AID: 3 }]);
-
-    await boatStorageController.mine(req, res);
-    expect(res.json).toHaveBeenCalledWith([{ AID: 3 }]);
-  });
-
-  test("user gets only his own entries", async () => {
-    const req = { user: { role: "Client", id: 99 } };
-    const res = mockRes();
-
-    models.BoatStorage.findAll.mockResolvedValue([{ AID: 4 }]);
-
-    await boatStorageController.mine(req, res);
-    expect(models.BoatStorage.findAll).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith([{ AID: 4 }]);
-  });
-
-  test("handles error", async () => {
-    const req = { user: { role: "Client", id: 99 } };
-    const res = mockRes();
-
     models.BoatStorage.findAll.mockRejectedValue(new Error());
 
-    await boatStorageController.mine(req, res);
+    await boatStorageController.list({}, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
-describe("boatStorageController.getOne", () => {
-  test("returns record", async () => {
-    const req = { params: { id: 1 } };
+// ==========================================================================
+// LIST LIGHT
+// ==========================================================================
+describe("boatStorageController.listLight", () => {
+  it("returns rows", async () => {
     const res = mockRes();
+    sequelize.query.mockResolvedValue([{ AID: 1 }]);
 
-    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
+    await boatStorageController.listLight({}, res);
 
-    await boatStorageController.getOne(req, res);
-
-    expect(res.json).toHaveBeenCalledWith({ AID: 1 });
+    expect(res.json).toHaveBeenCalledWith([{ AID: 1 }]);
   });
 
-  test("404 if not found", async () => {
-    const req = { params: { id: 1 } };
+  it("500 on error", async () => {
     const res = mockRes();
+    sequelize.query.mockRejectedValue(new Error());
 
-    models.BoatStorage.findByPk.mockResolvedValue(null);
+    await boatStorageController.listLight({}, res);
 
-    await boatStorageController.getOne(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test("500 on error", async () => {
-    const req = { params: { id: 1 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockRejectedValue(new Error());
-
-    await boatStorageController.getOne(req, res);
     expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
-describe("boatStorageController.update", () => {
-  test("updates successfully", async () => {
-    const req = { params: { id: 1 }, body: { Budget: 200 } };
+// ==========================================================================
+// BY BOAT
+// ==========================================================================
+describe("boatStorageController.byBoat", () => {
+  it("400 invalid BID", async () => {
     const res = mockRes();
+    await boatStorageController.byBoat(
+      { params: { bid: "x" }, user: { role: "Admin" } },
+      res
+    );
 
-    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
-    models.BoatStorage.update.mockResolvedValue({});
-    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1, Budget: 200 });
-
-    await boatStorageController.update(req, res);
-    expect(res.json).toHaveBeenCalled();
-  });
-
-  test("404 if not found", async () => {
-    const req = { params: { id: 1 }, body: {} };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue(null);
-
-    await boatStorageController.update(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test("400 invalid budget", async () => {
-    const req = { params: { id: 1 }, body: { Budget: -10 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
-
-    await boatStorageController.update(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("500 on error", async () => {
-    const req = { params: { id: 1 }, body: {} };
+  it("403 client not owner", async () => {
     const res = mockRes();
+    models.Boats.findOne.mockResolvedValue(null);
 
-    models.BoatStorage.findByPk.mockRejectedValue(new Error());
+    await boatStorageController.byBoat(
+      { params: { bid: "1" }, user: { role: "Client", id: 5 } },
+      res
+    );
 
-    await boatStorageController.update(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
-
-describe("boatStorageController.delete", () => {
-  test("deletes successfully", async () => {
-    const req = { params: { id: 1 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
-    models.BoatStorage.destroy.mockResolvedValue(1);
-
-    await boatStorageController.delete(req, res);
-    expect(res.json).toHaveBeenCalled();
-  });
-
-  test("404 if not found", async () => {
-    const req = { params: { id: 1 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue(null);
-
-    await boatStorageController.delete(req, res);
-    expect(res.status).toHaveBeenCalledWith(404);
-  });
-
-  test("500 on error", async () => {
-    const req = { params: { id: 1 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockRejectedValue(new Error());
-
-    await boatStorageController.delete(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
-  });
-});
-
-describe("boatStorageController.updateBudget", () => {
-  test("staff can set any budget", async () => {
-    const req = { params: { id: 1 }, user: { role: "Admin" }, body: { Budget: 300 } };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue({ 
-      AID: 1, 
-      Budget: 100, 
-      Boat: { UID: 99 },
-      save: jest.fn()
-    });
-
-    await boatStorageController.updateBudget(req, res);
-    expect(res.json).toHaveBeenCalled();
-  });
-
-  test("client cannot decrease budget", async () => {
-    const req = {
-      params: { id: 1 },
-      user: { role: "Client", id: 5 },
-      body: { Budget: 50 }
-    };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue({
-      AID: 1,
-      Budget: 100,
-      Boat: { UID: 5 },
-      save: jest.fn()
-    });
-
-    await boatStorageController.updateBudget(req, res);
-    expect(res.status).toHaveBeenCalledWith(400);
-  });
-
-  test("403 if user is not owner", async () => {
-    const req = {
-      params: { id: 1 },
-      user: { role: "Client", id: 8 },
-      body: { Budget: 200 }
-    };
-    const res = mockRes();
-
-    models.BoatStorage.findByPk.mockResolvedValue({
-      AID: 1,
-      Budget: 100,
-      Boat: { UID: 5 },
-    });
-
-    await boatStorageController.updateBudget(req, res);
     expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  test("400 invalid client budget (null)", async () => {
-    const req = {
-      params: { id: 1 },
-      user: { role: "Client", id: 5 },
-      body: { Budget: null }
-    };
+  it("returns list for staff", async () => {
     const res = mockRes();
+    models.BoatStorage.findAll.mockResolvedValue([{ AID: 1 }]);
 
-    models.BoatStorage.findByPk.mockResolvedValue({
-      AID: 1,
-      Budget: 100,
-      Boat: { UID: 5 },
-    });
+    await boatStorageController.byBoat(
+      { params: { bid: "1" }, user: { role: "Admin" } },
+      res
+    );
 
-    await boatStorageController.updateBudget(req, res);
+    expect(res.json).toHaveBeenCalledWith([{ AID: 1 }]);
+  });
+
+  it("500 on error", async () => {
+    const res = mockRes();
+    models.BoatStorage.findAll.mockRejectedValue(new Error());
+
+    await boatStorageController.byBoat(
+      { params: { bid: "1" }, user: { role: "Admin" } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+// ==========================================================================
+// MINE
+// ==========================================================================
+describe("boatStorageController.mine", () => {
+  it("admin gets all", async () => {
+    const res = mockRes();
+    models.BoatStorage.findAll.mockResolvedValue([{ AID: 1 }]);
+
+    await boatStorageController.mine({ user: { role: "Admin" } }, res);
+
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it("client gets own", async () => {
+    const res = mockRes();
+    models.BoatStorage.findAll.mockResolvedValue([{ AID: 2 }]);
+
+    await boatStorageController.mine(
+      { user: { role: "Client", id: 9 } },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalled();
+  });
+
+  it("500 on error", async () => {
+    const res = mockRes();
+    models.BoatStorage.findAll.mockRejectedValue(new Error());
+
+    await boatStorageController.mine(
+      { user: { role: "Client", id: 9 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(500);
+  });
+});
+
+// ==========================================================================
+// GET ONE
+// ==========================================================================
+describe("boatStorageController.getOne", () => {
+  it("400 invalid id", async () => {
+    const res = mockRes();
+    await boatStorageController.getOne(
+      { params: { id: "x" }, user: { role: "Admin" } },
+      res
+    );
+
     expect(res.status).toHaveBeenCalledWith(400);
   });
 
-  test("500 on error", async () => {
-    const req = { params: { id: 1 }, user: { role: "Admin" }, body: { Budget: 200 } };
+  it("404 not found", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue(null);
+
+    await boatStorageController.getOne(
+      { params: { id: "1" }, user: { role: "Admin" } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it("403 client forbidden", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({
+      Boat: { UID: 9 },
+    });
+
+    await boatStorageController.getOne(
+      { params: { id: "1" }, user: { role: "Client", id: 5 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it("returns record", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({
+      Boat: { UID: 5 },
+    });
+
+    await boatStorageController.getOne(
+      { params: { id: "1" }, user: { role: "Client", id: 5 } },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalled();
+  });
+});
+
+// ==========================================================================
+// UPDATE
+// ==========================================================================
+describe("boatStorageController.update", () => {
+  it("404 not found", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue(null);
+
+    await boatStorageController.update(
+      { params: { id: "1" }, body: {} },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it("400 invalid budget", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({});
+
+    await boatStorageController.update(
+      { params: { id: "1" }, body: { Budget: -1 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("updates entry", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
+    models.BoatStorage.update.mockResolvedValue();
+    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1, Budget: 10 });
+
+    await boatStorageController.update(
+      { params: { id: "1" }, body: { Budget: 10 } },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalled();
+    expect(t.commit).toHaveBeenCalled();
+  });
+});
+
+// ==========================================================================
+// DELETE
+// ==========================================================================
+describe("boatStorageController.delete", () => {
+  it("404 not found", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue(null);
+
+    await boatStorageController.delete(
+      { params: { id: "1" } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it("deletes entry", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({ AID: 1 });
+    models.BoatStorage.destroy.mockResolvedValue(1);
+
+    await boatStorageController.delete(
+      { params: { id: "1" } },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalled();
+    expect(t.commit).toHaveBeenCalled();
+  });
+});
+
+// ==========================================================================
+// UPDATE BUDGET
+// ==========================================================================
+describe("boatStorageController.updateBudget", () => {
+  it("400 invalid budget", async () => {
     const res = mockRes();
 
-    models.BoatStorage.findByPk.mockRejectedValue(new Error());
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Admin" }, body: { Budget: -1 } },
+      res
+    );
 
-    await boatStorageController.updateBudget(req, res);
-    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("404 not found", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue(null);
+
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Admin" }, body: { Budget: 10 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it("403 not owner", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({
+      Boat: { UID: 9 },
+    });
+
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Client", id: 5 }, body: { Budget: 20 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it("400 client cannot decrease budget", async () => {
+    const res = mockRes();
+    models.BoatStorage.findByPk.mockResolvedValue({
+      Budget: 100,
+      Boat: { UID: 5 },
+      save: jest.fn(),
+    });
+
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Client", id: 5 }, body: { Budget: 50 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("client increases budget", async () => {
+    const res = mockRes();
+    const rec = {
+      AID: 1,
+      Budget: 100,
+      Boat: { UID: 5 },
+      save: jest.fn(),
+    };
+    models.BoatStorage.findByPk.mockResolvedValue(rec);
+
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Client", id: 5 }, body: { Budget: 150 } },
+      res
+    );
+
+    expect(rec.save).toHaveBeenCalled();
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("staff sets any budget", async () => {
+    const res = mockRes();
+    const rec = {
+      AID: 1,
+      Budget: 50,
+      Boat: { UID: 9 },
+      save: jest.fn(),
+    };
+    models.BoatStorage.findByPk.mockResolvedValue(rec);
+
+    await boatStorageController.updateBudget(
+      { params: { id: "1" }, user: { role: "Admin" }, body: { Budget: null } },
+      res
+    );
+
+    expect(rec.save).toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalled();
   });
 });

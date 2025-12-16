@@ -1,16 +1,11 @@
 const { models } = require("../Database/db");
 
-// ============================================================
-// UPDATE PROBLEM STATUS WHEN ANY WORK CHANGES STATE
-// ============================================================
 async function updateProblemStatusIfNeeded(work, transaction) {
-  // work does NOT belong to any problem → no-op
   if (!work.PID) return;
 
   const problem = await models.Problems.findByPk(work.PID, { transaction });
   if (!problem) return;
 
-  // all works belonging to this problem
   const works = await models.Work.findAll({
     where: { PID: work.PID },
     transaction

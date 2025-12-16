@@ -4,9 +4,6 @@ const { Op } = require("sequelize");
 const TYPE_VALUES = ["Issue", "ClientRequest"];
 const STATUS_VALUES = ["New", "InProgress", "Resolved"];
 
-// -------------------------------------------------------------
-// HELPERS
-// -------------------------------------------------------------
 
 async function findCurrentSeason(t) {
   const today = new Date();
@@ -20,20 +17,12 @@ async function findCurrentSeason(t) {
   });
 }
 
-// -------------------------------------------------------------
-// CONTROLLER
-// -------------------------------------------------------------
-
 module.exports = {
-  // -----------------------------------------------------------
-  // LIST ALL PROBLEMS
-  // -----------------------------------------------------------
 async list(req, res) {
   try {
     const isStaff = ["Admin", "Employee"].includes(req.user.role);
     const where = {};
 
-    // opcjonalny filtr po AID – konkretne przechowywanie
     if (req.query.AID) {
       const aid = parseInt(req.query.AID, 10);
       if (Number.isNaN(aid)) {
@@ -88,10 +77,6 @@ async list(req, res) {
   }
 },
 
-
-  // -----------------------------------------------------------
-  // GET ONE
-  // -----------------------------------------------------------
   async getOne(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -122,9 +107,6 @@ async list(req, res) {
     }
   },
 
-  // -----------------------------------------------------------
-  // CREATE PROBLEM (optional autoWork=true for staff)
-  // -----------------------------------------------------------
   async create(req, res) {
   const t = await sequelize.transaction();
   try {
@@ -150,7 +132,6 @@ async list(req, res) {
         .json({ error: "AID and Description are required" });
     }
 
-    // Powiązanie z konkretnym przechowywaniem
     const storage = await models.BoatStorage.findByPk(AID, {
       transaction: t,
     });
@@ -181,7 +162,6 @@ async list(req, res) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // 1️⃣ Problem, przypięty do AID
     const problem = await models.Problems.create(
       {
         BID,
@@ -194,13 +174,11 @@ async list(req, res) {
       { transaction: t }
     );
 
-    // 2️⃣ Jeżeli NIE autoWork → koniec
     if (!isStaff || !autoWork) {
       await t.commit();
       return res.status(201).json(problem);
     }
 
-    // 3️⃣ Staff + autoWork wymaga SID
     if (!SID) {
       await t.rollback();
       return res.status(400).json({
@@ -220,7 +198,6 @@ async list(req, res) {
 
     const seasonID = storage.seasonID;
 
-    // 5️⃣ Tworzymy Work powiązany z problemem + AID
     const work = await models.Work.create(
       {
         SID,
@@ -249,10 +226,6 @@ async list(req, res) {
   }
 },
 
-
-  // -----------------------------------------------------------
-  // ADD WORK TO PROBLEM
-  // -----------------------------------------------------------
   async addWork(req, res) {
   const t = await sequelize.transaction();
   try {
@@ -278,7 +251,6 @@ async list(req, res) {
         .json({ error: "Only staff can add work to a problem" });
     }
 
-    // jeżeli to Issue niezatwierdzony przez klienta → blokujemy prace
     if (prob.Type === "Issue" && !prob.ApprovedByClient) {
       await t.rollback();
       return res.status(400).json({
@@ -302,7 +274,6 @@ async list(req, res) {
         .json({ error: "Service not found" });
     }
 
-    // Ustalenie seasonID i AID dla Work
     let seasonID;
     let AID = prob.AID || null;
 
@@ -318,7 +289,6 @@ async list(req, res) {
       }
       seasonID = storage.seasonID;
     } else {
-      // fallback dla starych rekordów bez AID
       const currentSeason = await findCurrentSeason(t);
       if (!currentSeason) {
         await t.rollback();
@@ -359,10 +329,6 @@ async list(req, res) {
   }
 },
 
-
-  // -----------------------------------------------------------
-  // UPDATE STATUS
-  // -----------------------------------------------------------
   async updateStatus(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -395,9 +361,6 @@ async list(req, res) {
     }
   },
 
-  // -----------------------------------------------------------
-  // UPDATE (staff / client)
-  // -----------------------------------------------------------
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -462,9 +425,6 @@ async list(req, res) {
     }
   },
 
-  // -----------------------------------------------------------
-  // APPROVE PROBLEM (client approves Issue)
-  // -----------------------------------------------------------
   async approve(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -481,7 +441,6 @@ async list(req, res) {
         return res.status(404).json({ error: "Problem not found" });
       }
 
-      // Only CLIENT can approve an Issue related to THEIR boat
       if (rec.Type !== "Issue") {
         await t.rollback();
         return res

@@ -88,9 +88,6 @@
 
 <script setup>
 import { useI18n } from "vue-i18n";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import Tag from "primevue/tag";
 
 const props = defineProps({
   visible: {

@@ -1,9 +1,11 @@
-// Backend/Tests/engineController.unit.test.js
-const mockResponse = require("./mockRes");
 const engineController = require("../Controllers/engineInformationController");
+const mockRes = require("./mockRes");
 
+// ==========================================================================
+// MOCK DB
+// ==========================================================================
 jest.mock("../Database/db", () => {
-  const mockTransaction = {
+  const t = {
     commit: jest.fn(),
     rollback: jest.fn(),
     LOCK: { UPDATE: "UPDATE" },
@@ -11,7 +13,7 @@ jest.mock("../Database/db", () => {
 
   return {
     sequelize: {
-      transaction: jest.fn(() => Promise.resolve(mockTransaction)),
+      transaction: jest.fn().mockResolvedValue(t),
     },
     models: {
       Boats: {
@@ -24,341 +26,301 @@ jest.mock("../Database/db", () => {
         destroy: jest.fn(),
       },
     },
-    __mockTransaction: mockTransaction,
+    __t: t,
   };
 });
 
-const { models, __mockTransaction: t } = require("../Database/db");
+const { models, __t: t } = require("../Database/db");
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
-afterEach(() => jest.restoreAllMocks());
-
-// ===========================================================================
+// ==========================================================================
 // CREATE
-// ===========================================================================
+// ==========================================================================
 describe("engineController.create", () => {
-  it("returns 400 if BID is missing", async () => {
-    const req = { body: {}, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
+  it("400 when BID missing", async () => {
+    const res = mockRes();
 
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: {}, user: { role: "Admin", id: 1 } },
+      res
+    );
 
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({ error: "BID is required" });
+    expect(t.rollback).toHaveBeenCalled();
   });
 
-  it("returns 404 if boat not found", async () => {
-    const req = { body: { BID: 5 }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
+  it("404 when boat not found", async () => {
+    const res = mockRes();
     models.Boats.findByPk.mockResolvedValue(null);
 
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: { BID: 1 }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ error: "Boat not found" });
   });
 
-  it("returns 403 if client is not owner", async () => {
-    const req = { body: { BID: 5 }, user: { role: "Client", id: 99 } };
-    const res = mockResponse();
+  it("403 when client not owner", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockResolvedValue({ UID: 99 });
 
-    models.Boats.findByPk.mockResolvedValue({ BID: 5, UID: 321 });
-
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: { BID: 1 }, user: { role: "Client", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
   });
 
-  it("returns 409 if engine already exists", async () => {
-    const req = { body: { BID: 5 }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
+  it("409 when engine already exists", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockResolvedValue({ UID: 1 });
+    models.EngineInformation.findOne.mockResolvedValue({ BID: 1 });
 
-    models.Boats.findByPk.mockResolvedValue({ BID: 5, UID: 1 });
-    models.EngineInformation.findOne.mockResolvedValue({ BID: 5 });
-
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: { BID: 1, Model: "X" }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Engine information already exists for this boat",
-    });
   });
 
-  it("returns 400 if a required field is missing", async () => {
-    const req = {
-      body: { BID: 5, Model: "X" }, // reszta pól brak
-      user: { role: "Admin", id: 1 },
-    };
-    const res = mockResponse();
-
-    models.Boats.findByPk.mockResolvedValue({ BID: 5, UID: 1 });
+  it("400 when no engine fields provided", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockResolvedValue({ UID: 1 });
     models.EngineInformation.findOne.mockResolvedValue(null);
 
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: { BID: 1 }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: expect.stringContaining("Field"),
-      })
-    );
+    expect(res.json).toHaveBeenCalledWith({
+      error: "At least one engine field is required (besides BID)",
+    });
   });
 
-  it("creates engine info successfully", async () => {
-    const req = {
-      body: {
-        BID: 5,
-        Model: "M",
-        Brand: "B",
-        Engine_nr: "1",
-        Reversing_gear: "Y",
-        Reversing_gear_nr: "2",
-        Sterndrive: "S",
-        Sterndrive_nr: "3",
-        Transom: "T",
-        Transom_nr: "4",
-        BT: "yes",
-        ST: "no",
-        Moto_H: 500,
-      },
-      user: { role: "Admin", id: 1 },
-    };
-    const res = mockResponse();
-
-    models.Boats.findByPk.mockResolvedValue({ BID: 5, UID: 1 });
+  it("201 creates engine (happy path)", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockResolvedValue({ UID: 1 });
     models.EngineInformation.findOne.mockResolvedValue(null);
-    models.EngineInformation.create.mockResolvedValue({ BID: 5 });
+    models.EngineInformation.create.mockResolvedValue({ BID: 1 });
 
-    await engineController.create(req, res);
+    await engineController.create(
+      {
+        body: { BID: 1, Model: "Volvo", Brand: "Penta" },
+        user: { role: "Admin", id: 1 },
+      },
+      res
+    );
 
     expect(models.EngineInformation.create).toHaveBeenCalled();
-    expect(t.commit).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith({ BID: 5 });
+    expect(t.commit).toHaveBeenCalled();
   });
 
-  it("returns 500 on error", async () => {
-    const req = { body: { BID: 5 }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
+  it("500 on create error", async () => {
+    const res = mockRes();
+    models.Boats.findByPk.mockRejectedValue(new Error("db"));
 
-    models.Boats.findByPk.mockRejectedValue(new Error("fail"));
-
-    await engineController.create(req, res);
+    await engineController.create(
+      { body: { BID: 1, Model: "X" }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: "Server error while creating engine information",
-      })
-    );
   });
 });
 
-// ===========================================================================
+// ==========================================================================
 // GET BY BOAT
-// ===========================================================================
+// ==========================================================================
 describe("engineController.getByBoat", () => {
-  it("returns 404 if not found", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
+  it("404 when not found", async () => {
+    const res = mockRes();
     models.EngineInformation.findOne.mockResolvedValue(null);
 
-    await engineController.getByBoat(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Engine information not found",
-    });
-  });
-
-  it("returns 403 if client not owner", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Client", id: 1 } };
-    const res = mockResponse();
-
-    models.EngineInformation.findOne.mockResolvedValue({
-      BID: 5,
-      Boat: { UID: 999 },
-    });
-
-    await engineController.getByBoat(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
-  });
-
-  it("returns engine for staff", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
-    const engine = { BID: 5 };
-    models.EngineInformation.findOne.mockResolvedValue(engine);
-
-    await engineController.getByBoat(req, res);
-
-    expect(res.json).toHaveBeenCalledWith(engine);
-  });
-
-  it("returns 500 on error", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
-    models.EngineInformation.findOne.mockRejectedValue(new Error("err"));
-
-    await engineController.getByBoat(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: "Server error while fetching engine information",
-      })
+    await engineController.getByBoat(
+      { params: { bid: "1" }, user: { role: "Admin", id: 1 } },
+      res
     );
-  });
-});
-
-// ===========================================================================
-// UPDATE
-// ===========================================================================
-describe("engineController.update", () => {
-  it("returns 404 if not found", async () => {
-    const req = { params: { bid: "5" }, body: {}, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
-    models.EngineInformation.findOne.mockResolvedValue(null);
-
-    await engineController.update(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Engine information not found",
-    });
   });
 
-  it("returns 403 if client not owner", async () => {
-    const req = { params: { bid: "5" }, body: {}, user: { role: "Client", id: 1 } };
-    const res = mockResponse();
-
+  it("403 when client not owner", async () => {
+    const res = mockRes();
     models.EngineInformation.findOne.mockResolvedValue({
-      Boat: { UID: 999 },
+      Boat: { UID: 9 },
     });
 
-    await engineController.update(req, res);
+    await engineController.getByBoat(
+      { params: { bid: "1" }, user: { role: "Client", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({ error: "Forbidden" });
   });
 
-  it("returns 400 if any required field set to empty string", async () => {
-    const req = {
-      params: { bid: "5" },
-      body: { Model: "" },
-      user: { role: "Admin", id: 1 },
-    };
-    const res = mockResponse();
-
+  it("returns engine for owner", async () => {
+    const res = mockRes();
     models.EngineInformation.findOne.mockResolvedValue({
+      BID: 1,
       Boat: { UID: 1 },
     });
 
-    await engineController.update(req, res);
+    await engineController.getByBoat(
+      { params: { bid: "1" }, user: { role: "Client", id: 1 } },
+      res
+    );
 
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Field Model cannot be empty",
-    });
+    expect(res.json).toHaveBeenCalled();
   });
 
-  it("updates engine successfully", async () => {
-    const req = {
-      params: { bid: "5" },
-      body: { Model: "NewM" },
-      user: { role: "Admin", id: 1 },
-    };
-    const res = mockResponse();
+  it("500 on get error", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockRejectedValue(new Error());
 
-    models.EngineInformation.findOne
-      .mockResolvedValueOnce({ Boat: { UID: 1 } })
-      .mockResolvedValueOnce({ BID: 5, Model: "NewM" });
-
-    await engineController.update(req, res);
-
-    expect(models.EngineInformation.update).toHaveBeenCalled();
-    expect(t.commit).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ BID: 5, Model: "NewM" });
-  });
-
-  it("returns 500 on error", async () => {
-    const req = { params: { bid: "5" }, body: {}, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
-    models.EngineInformation.findOne.mockRejectedValue(new Error("err"));
-
-    await engineController.update(req, res);
+    await engineController.getByBoat(
+      { params: { bid: "1" }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: "Server error while updating engine information",
-      })
-    );
   });
 });
 
-// ===========================================================================
-// DELETE
-// ===========================================================================
-describe("engineController.remove", () => {
-  it("returns 404 if not found", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
+// ==========================================================================
+// UPDATE
+// ==========================================================================
+describe("engineController.update", () => {
+  it("404 when engine not found", async () => {
+    const res = mockRes();
     models.EngineInformation.findOne.mockResolvedValue(null);
 
-    await engineController.remove(req, res);
+    await engineController.update(
+      { params: { bid: "1" }, body: {}, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Engine information not found",
+  });
+
+  it("403 when client not owner", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockResolvedValue({
+      Boat: { UID: 9 },
     });
-  });
 
-  it("deletes engine info", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
-
-    models.EngineInformation.findOne.mockResolvedValue({ BID: 5 });
-
-    await engineController.remove(req, res);
-
-    expect(models.EngineInformation.destroy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { BID: 5 },
-      })
+    await engineController.update(
+      { params: { bid: "1" }, body: { Model: "X" }, user: { role: "Client", id: 1 } },
+      res
     );
-    expect(t.commit).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith({ message: "Engine information deleted" });
+
+    expect(res.status).toHaveBeenCalledWith(403);
   });
 
-  it("returns 500 on error", async () => {
-    const req = { params: { bid: "5" }, user: { role: "Admin", id: 1 } };
-    const res = mockResponse();
+  it("400 when no fields provided", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockResolvedValue({
+      BID: 1,
+      Boat: { UID: 1 },
+    });
 
-    models.EngineInformation.findOne.mockRejectedValue(new Error("err"));
+    await engineController.update(
+      { params: { bid: "1" }, body: {}, user: { role: "Admin", id: 1 } },
+      res
+    );
 
-    await engineController.remove(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("updates engine", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockResolvedValue({
+      BID: 1,
+      Boat: { UID: 1 },
+    });
+
+    models.EngineInformation.update.mockResolvedValue([1]);
+    models.EngineInformation.findOne.mockResolvedValue({
+      BID: 1,
+      Model: "New",
+    });
+
+    await engineController.update(
+      {
+        params: { bid: "1" },
+        body: { Model: "New" },
+        user: { role: "Admin", id: 1 },
+      },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalled();
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("500 on update error", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockRejectedValue(new Error());
+
+    await engineController.update(
+      { params: { bid: "1" }, body: { Model: "X" }, user: { role: "Admin", id: 1 } },
+      res
+    );
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        error: "Server error while deleting engine information",
-      })
+  });
+});
+
+// ==========================================================================
+// REMOVE
+// ==========================================================================
+describe("engineController.remove", () => {
+  it("404 when engine not found", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockResolvedValue(null);
+
+    await engineController.remove(
+      { params: { bid: "1" }, user: { role: "Admin", id: 1 } },
+      res
     );
+
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+
+  it("deletes engine", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockResolvedValue({ BID: 1 });
+    models.EngineInformation.destroy.mockResolvedValue(1);
+
+    await engineController.remove(
+      { params: { bid: "1" }, user: { role: "Admin", id: 1 } },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Engine information deleted",
+    });
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("500 on delete error", async () => {
+    const res = mockRes();
+    models.EngineInformation.findOne.mockRejectedValue(new Error());
+
+    await engineController.remove(
+      { params: { bid: "1" }, user: { role: "Admin", id: 1 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });

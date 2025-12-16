@@ -1,7 +1,7 @@
-// Backend/controllers/engineController.js
 const { models, sequelize } = require("../Database/db");
 
-const REQUIRED_FIELDS = [
+
+const ENGINE_FIELDS = [
   "Model",
   "Brand",
   "Engine_nr",
@@ -18,14 +18,13 @@ const REQUIRED_FIELDS = [
 
 function pickEnginePayload(body) {
   const p = {};
-  for (const k of REQUIRED_FIELDS) {
+  for (const k of ENGINE_FIELDS) {
     if (body[k] !== undefined) p[k] = body[k];
   }
   return p;
 }
 
 module.exports = {
-  /* POST /engine  — create engine info for a boat (one per BID) */
   async create(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -62,21 +61,16 @@ module.exports = {
           .json({ error: "Engine information already exists for this boat" });
       }
 
-      for (const f of REQUIRED_FIELDS) {
-        if (
-          req.body[f] === undefined ||
-          req.body[f] === null ||
-          req.body[f] === ""
-        ) {
-          await t.rollback();
-          return res
-            .status(400)
-            .json({ error: `Field ${f} is required` });
-        }
-      }
-
       const payload = pickEnginePayload(req.body);
       payload.BID = BID;
+
+      const hasAnyField = ENGINE_FIELDS.some((f) => payload[f] !== undefined);
+      if (!hasAnyField) {
+        await t.rollback();
+        return res.status(400).json({
+          error: "At least one engine field is required (besides BID)",
+        });
+      }
 
       const engine = await models.EngineInformation.create(payload, {
         transaction: t,
@@ -93,7 +87,6 @@ module.exports = {
     }
   },
 
-  /* GET /engine/:bid — get engine info by boat id */
   async getByBoat(req, res) {
     try {
       const bid = parseInt(req.params.bid, 10);
@@ -123,7 +116,6 @@ module.exports = {
     }
   },
 
-  /* PUT /engine/:bid — update engine info by boat id */
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -151,14 +143,11 @@ module.exports = {
 
       const updates = pickEnginePayload(req.body);
 
-      // Optional: enforce required-once fields remain non-empty
-      for (const f of REQUIRED_FIELDS) {
-        if (updates[f] === "") {
-          await t.rollback();
-          return res.status(400).json({
-            error: `Field ${f} cannot be empty`,
-          });
-        }
+      if (Object.keys(updates).length === 0) {
+        await t.rollback();
+        return res.status(400).json({
+          error: "No fields provided to update",
+        });
       }
 
       await models.EngineInformation.update(updates, {
@@ -182,7 +171,6 @@ module.exports = {
     }
   },
 
-  /* DELETE /engine/:bid — staff only */
   async remove(req, res) {
     const t = await sequelize.transaction();
     try {

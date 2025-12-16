@@ -9,7 +9,6 @@ const MIN_DAYS_TRAILER           = 3;
 const START_MONTH = parseInt(process.env.LAUNCH_START_MONTH || "4", 10);
 const END_MONTH   = parseInt(process.env.LAUNCH_END_MONTH   || "9", 10);
 
-// helpery
 function daysBetween(startDate, targetDate) {
   const s = new Date(startDate); const t = new Date(targetDate);
   s.setHours(0,0,0,0); t.setHours(0,0,0,0);
@@ -17,7 +16,6 @@ function daysBetween(startDate, targetDate) {
 }
 
 async function resolveStorageContext(AID, t) {
-  // ETAP 3: pracujemy per BoatStorage → wymagamy AID
   if (!AID) return null;
 
   const storage = await models.BoatStorage.findByPk(AID, {
@@ -43,13 +41,6 @@ async function hasWorksThisSeason(BID, seasonID, t, AID = null) {
 
 
 module.exports = {
-
-  // ----------------------------------------
-  // POST /out-requests
-  // ----------------------------------------
-   // ----------------------------------------
-// POST /out-requests
-// ----------------------------------------
 async create(req, res) {
   const t = await sequelize.transaction();
   try {
@@ -89,7 +80,6 @@ async create(req, res) {
       return res.status(404).json({ error: "Boat not found" });
     }
 
-    // Launch months restriction
     if (type === "Launch") {
       const month = new Date(preferredWeekStart).getUTCMonth() + 1;
       if (month < START_MONTH || month > END_MONTH) {
@@ -100,7 +90,6 @@ async create(req, res) {
       }
     }
 
-    // one pending request per boat+season
     const existingPending = await models.BoatOutRequest.findOne({
       where: { BID, seasonID, status: "Pending" },
       transaction: t,
@@ -114,7 +103,6 @@ async create(req, res) {
       });
     }
 
-    // minimal notice depending on works
     const today = new Date();
     const diffDays = daysBetween(today, preferredWeekStart);
     const works = await hasWorksThisSeason(BID, seasonID, t, AID);
@@ -160,12 +148,6 @@ async create(req, res) {
     });
   }
 },
-
-
-
-  // ----------------------------------------
-  // GET /out-requests
-  // ----------------------------------------
   async listAll(req, res) {
   try {
     const { status, AID } = req.query;
@@ -223,9 +205,6 @@ async create(req, res) {
   }
 },
 
-  // ----------------------------------------
-  // GET /out-requests/my
-  // ----------------------------------------
   async listMine(req, res) {
   try {
     const isClient = req.user.role === "Client";
@@ -262,10 +241,6 @@ async create(req, res) {
   }
 },
 
-
-  // ----------------------------------------
-  // PUT /out-requests/:id/approve
-  // ----------------------------------------
   async approve(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -296,7 +271,6 @@ async create(req, res) {
         return res.status(400).json({ error: "Chosen date is outside requested week" });
       }
 
-      // check daily limit
       const slot = new Date(chosen); slot.setMinutes(0,0,0);
 
       const dayStart = new Date(slot); dayStart.setHours(0,0,0,0);
@@ -317,7 +291,6 @@ async create(req, res) {
         return res.status(409).json({ error: "Daily limit reached, choose another day" });
       }
 
-      // update boat.out
       const boat = await models.Boats.findByPk(reqRec.BID, {
         transaction: t,
         lock: t.LOCK.UPDATE,
@@ -325,7 +298,6 @@ async create(req, res) {
       boat.out = slot;
       await boat.save({ transaction: t });
 
-      // update request
       reqRec.status = "Accepted";
       reqRec.confirmedDate = slot;
       reqRec.handledBy = req.user.id;
@@ -341,9 +313,6 @@ async create(req, res) {
     }
   },
 
-  // ----------------------------------------
-  // PUT /out-requests/:id/reject
-  // ----------------------------------------
   async reject(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -374,10 +343,7 @@ async create(req, res) {
       res.status(500).json({ error:"Server error while rejecting request" });
     }
   },
-
-  // ----------------------------------------
-  // PUT /out-requests/:id/cancel
-  // ----------------------------------------
+  
   async cancel(req, res) {
     const t = await sequelize.transaction();
     try {

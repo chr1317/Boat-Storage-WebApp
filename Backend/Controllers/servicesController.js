@@ -1,9 +1,6 @@
 const { models, sequelize } = require("../Database/db");
 
 module.exports = {
-  // -----------------------------------------------------------
-  // CREATE
-  // -----------------------------------------------------------
   async create(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -24,9 +21,6 @@ module.exports = {
     }
   },
 
-  // -----------------------------------------------------------
-  // LIST
-  // -----------------------------------------------------------
   async list(req, res) {
     try {
       const services = await models.Services.findAll({ order: [["SID","ASC"]] });
@@ -38,9 +32,6 @@ module.exports = {
     }
   },
 
-  // -----------------------------------------------------------
-  // GET ONE
-  // -----------------------------------------------------------
   async getOne(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -56,9 +47,6 @@ module.exports = {
     }
   },
 
-  // -----------------------------------------------------------
-  // UPDATE
-  // -----------------------------------------------------------
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -92,9 +80,6 @@ module.exports = {
     }
   },
 
-  // -----------------------------------------------------------
-  // DELETE
-  // -----------------------------------------------------------
   async delete(req, res) {
     const t = await sequelize.transaction();
     try {

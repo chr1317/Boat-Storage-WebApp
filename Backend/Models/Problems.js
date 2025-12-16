@@ -1,4 +1,3 @@
-// Backend/Models/Problems.js
 module.exports = (sequelize, DataTypes) => {
   const Problems = sequelize.define(
     "Problems",

@@ -1,10 +1,7 @@
-// controllers/boatsController.js
 const { Op } = require("sequelize");
 const { models, sequelize } = require("../Database/db");
 const uuidv4 = require("uuid").v4;
 
-
-// EDITABLE FIELD LISTS
 const BOAT_FIELDS_USER = ["name", "HIN", "Type", "Drive", "BHID"];
 const BOAT_FIELDS = ["UID", ...BOAT_FIELDS_USER];
 const DIM_FIELDS = [
@@ -17,7 +14,6 @@ const ENGINE_FIELDS = [
   "BT","ST","Moto_H"
 ];
 
-// Generate unique QR
 async function generateUniqueQR() {
   while (true) {
     const qr = uuidv4();
@@ -28,9 +24,6 @@ async function generateUniqueQR() {
 
 module.exports = {
 
-  //------------------------------------
-  // CREATE BOAT
-  //------------------------------------
   async createBoat(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -43,7 +36,6 @@ module.exports = {
         });
       }
 
-      // BOAT VALIDATION
       const requiredBoat = ["name","HIN","Type","Drive"];
       const missingBoat = requiredBoat.filter(k =>
         boatBody[k] === undefined || boatBody[k] === null || boatBody[k] === ""
@@ -55,7 +47,6 @@ module.exports = {
         });
       }
 
-      // DIM VALIDATION
       const requiredDims = ["Length","Width"];
       const missingDims = requiredDims.filter(k =>
         dimBody[k] === undefined || dimBody[k] === null
@@ -103,9 +94,6 @@ module.exports = {
     }
   },
 
-  //------------------------------------
-  // LIST BOATS
-  //------------------------------------
   async listBoats(req, res) {
     try {
       const isAdmin = ["Admin","Employee"].includes(req.user.role);
@@ -130,9 +118,6 @@ module.exports = {
     }
   },
 
-  //------------------------------------
-  // GET ONE BOAT
-  //------------------------------------
   async getBoat(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -159,9 +144,6 @@ module.exports = {
     }
   },
 
-  //------------------------------------
-  // GET BOAT BY QR
-  //------------------------------------
 async getBoatByQR(req, res) {
   try {
     const { qr } = req.params;
@@ -185,7 +167,6 @@ async getBoatByQR(req, res) {
       return res.status(403).json({ error: "No permission" });
     }
 
-    // 🔹 SZUKAMY AKTUALNEGO STORAGE
     const now = new Date();
 
     const activeStorage = await models.BoatStorage.findOne({
@@ -217,10 +198,6 @@ async getBoatByQR(req, res) {
 
 
 async getBoatQRContext(req, res) {
-  console.log("QR =", qr);
-console.log("USER =", req.user);
-console.log("ROLE =", req.user.role, req.user.Role);
-console.log("ACTIVE STORAGE =", activeStorage?.AID);
   try {
     const { qr } = req.params;
     if (!qr) return res.status(400).json({ error: "Missing QR" });
@@ -251,7 +228,6 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
       ],
     });
 
-    // 🔥 JEDNOZNACZNY KONTRAKT
     res.json({
       BID: boat.BID,
       AID: activeStorage ? activeStorage.AID : null,
@@ -263,9 +239,6 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
 },
 
 
-  //------------------------------------
-  // UPDATE BOAT
-  //------------------------------------
   async updateBoat(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -301,9 +274,6 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
     }
   },
 
-  //------------------------------------
-  // DELETE BOAT
-  //------------------------------------
   async deleteBoat(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -331,9 +301,6 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
     }
   },
 
-  //------------------------------------
-  // SET OUT DATE
-  //------------------------------------
   async setOut(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -361,11 +328,9 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
         return res.json(boat);
       }
 
-      // normalize slot
       const slot = new Date(out);
       slot.setMinutes(0,0,0);
 
-      // DAY LIMIT
       const dayStart = new Date(slot); dayStart.setHours(0,0,0,0);
       const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate()+1);
 
@@ -386,7 +351,6 @@ console.log("ACTIVE STORAGE =", activeStorage?.AID);
         });
       }
 
-      // HOURLY SLOT CONFLICT
       const conflict = await models.Boats.count({
         where: { out: slot, BID: { [Op.ne]: boat.BID } },
         transaction: t, lock: t.LOCK.UPDATE

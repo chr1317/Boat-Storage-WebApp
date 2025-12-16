@@ -1,15 +1,9 @@
 import { apiFetch } from "./apiClient";
 
-/**
- * Get all defined seasons
- */
 export function getSeasons() {
   return apiFetch(`/seasons`);
 }
 
-/**
- * Get single season by seasonID
- */
 export function getSeasonById(id) {
   return apiFetch(`/seasons/${id}`);
 }

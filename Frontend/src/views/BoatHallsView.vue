@@ -139,12 +139,6 @@ import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
-import InputNumber from "primevue/inputnumber";
-import Card from "primevue/card";
-
 import { getBoathalls, createBoathall, deleteBoathall } from "../services/boathallService";
 import { getBoats } from "../services/boatService";
 

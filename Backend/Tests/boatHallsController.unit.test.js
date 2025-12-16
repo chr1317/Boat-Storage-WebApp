@@ -1,4 +1,3 @@
-// Backend/Tests/boatHallsController.unit.test.js
 const boatHallsController = require("../Controllers/boatHallsController");
 
 jest.mock("../Database/db", () => {

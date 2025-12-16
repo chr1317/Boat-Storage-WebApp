@@ -17,7 +17,6 @@
       :loading="loading"
       @row-click="goToBoat"
     >
-      <!-- kolumna z akcjami -->
       <template #actions>
         <Column header="Actions" style="width: 220px">
           <template #body="{ data }">
@@ -48,7 +47,6 @@
       @created="reloadBoats"
     />
 
-    <!-- NASZ WŁASNY CONFIRM DIALOG -->
     <Dialog
       v-model:visible="deleteDialogVisible"
       header="Delete boat"
@@ -83,10 +81,6 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
-
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import Column from "primevue/column";
 
 import { useAuthStore } from "../stores/auth";
 import { getBoats, deleteBoat } from "../services/boatService";

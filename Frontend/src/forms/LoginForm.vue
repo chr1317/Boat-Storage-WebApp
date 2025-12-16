@@ -71,7 +71,6 @@ async function handleLogin() {
       Password: password.value,
     });
 
-    // 🔸 jeśli backend zwraca mustChangePassword
     if (res.mustChangePassword) {
       toast.add({
         severity: "warn",

@@ -1,4 +1,3 @@
-// Backend/controllers/boatPositionsController.js
 const { Op } = require("sequelize");
 const { models, sequelize } = require("../Database/db");
 
@@ -20,7 +19,6 @@ function asRect(r) {
   };
 }
 
-/* -------- GEOMETRIA -------- */
 function overlaps(a, b) {
   const ax1 = a.PosX,
     ay1 = a.PosY;
@@ -43,7 +41,6 @@ function withinHall(rect, hall) {
   return xOk && yOk && rect.Width > 0 && rect.Length > 0;
 }
 
-/* -------- HELPERY -------- */
 async function paddedDimsForBoat(bid, bhid, t) {
   const dims = await models.BoatDimensions.findOne({
     where: { BID: bid },
@@ -89,7 +86,6 @@ async function validateRect(rect, excludeId, t) {
 }
 
 module.exports = {
-  /* CREATE */
   async create(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -162,7 +158,6 @@ module.exports = {
     }
   },
 
-  /* UPDATE */
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -233,7 +228,6 @@ module.exports = {
     }
   },
 
-  /* DELETE */
   async remove(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -263,7 +257,6 @@ module.exports = {
     }
   },
 
-  /* LIST BY HALL */
   async listByHall(req, res) {
     try {
       const bhid = parseInt(req.params.bhid, 10);
@@ -282,7 +275,6 @@ module.exports = {
     }
   },
 
-  /* GET BY BOAT */
   async getByBoat(req, res) {
     try {
       const bid = parseInt(req.params.bid, 10);
@@ -312,7 +304,6 @@ module.exports = {
     }
   },
 
-  /* SIMULATE */
   async simulate(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -425,7 +416,6 @@ module.exports = {
     }
   },
 
-  /* OPTIMIZE */
   async optimize(req, res) {
     const t = await sequelize.transaction();
     try {

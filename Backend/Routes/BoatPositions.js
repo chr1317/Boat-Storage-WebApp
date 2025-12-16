@@ -1,4 +1,3 @@
-// Backend/Routes/BoatPositions.js
 const express = require("express");
 const auth = require("../Middleware/Auth");
 const BoatPositionsController = require("../Controllers/boatPositionsController");

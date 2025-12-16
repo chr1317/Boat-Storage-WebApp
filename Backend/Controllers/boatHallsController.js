@@ -1,4 +1,3 @@
-// Backend/controllers/boatHallsController.js
 const { models, sequelize } = require("../Database/db");
 
 const FIELDS = ["Length", "Width", "Height"];
@@ -31,7 +30,6 @@ function pickUpdates(body) {
 }
 
 module.exports = {
-  /** CREATE */
   async create(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -52,7 +50,6 @@ module.exports = {
     }
   },
 
-  /** LIST */
   async list(_req, res) {
     try {
       const halls = await models.Boathalls.findAll({
@@ -65,7 +62,6 @@ module.exports = {
     }
   },
 
-  /** GET ONE */
   async getOne(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -82,7 +78,6 @@ module.exports = {
     }
   },
 
-  /** UPDATE */
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -128,7 +123,6 @@ module.exports = {
     }
   },
 
-  /** DELETE */
   async remove(req, res) {
     const t = await sequelize.transaction();
     try {

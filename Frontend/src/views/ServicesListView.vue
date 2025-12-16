@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <!-- 🔹 Header -->
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
       <h2 class="text-2xl font-semibold">{{ t("services.title") }}</h2>
 
@@ -13,7 +13,7 @@
       />
     </div>
 
-    <!-- 🔹 Table -->
+    <!-- Table -->
     <DynamicTable
       :data="services"
       :columns="columns"
@@ -36,7 +36,7 @@
     </DynamicTable>
   </div>
 
-  <!-- 🔹 Dialog: Service details -->
+  <!-- Dialog: Service details -->
   <Dialog
     v-model:visible="UserDetailsDialogVisible"
     modal
@@ -61,7 +61,7 @@
         </div>
       </div>
 
-      <!-- 🔸 Buttons -->
+      <!-- Buttons -->
       <div class="flex justify-end gap-2 mt-4">
         <Button
           icon="pi pi-pencil"
@@ -80,7 +80,7 @@
     </div>
   </Dialog>
 
-  <!-- 🔹 Dialog: Add/Edit service -->
+  <!-- Dialog: Add/Edit service -->
   <Dialog
     v-model:visible="ServiceFormDialogVisible"
     modal
@@ -114,14 +114,10 @@ import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 import { getServices, createService, updateService, deleteServiceById } from "../services/serviceService";
 import DynamicTable from "../components/DynamicTable.vue";
-import Button from "primevue/button";
-import Dialog from "primevue/dialog";
-import InputText from "primevue/inputtext";
 
 const { t } = useI18n({ useScope: "global" });
 const toast = useToast();
 
-// 🔹 state
 const services = ref([]);
 const loading = ref(true);
 const selectedUser = ref(null);
@@ -130,14 +126,12 @@ const ServiceFormDialogVisible = ref(false);
 const isEditing = ref(false);
 const form = ref({ Part: "", Name: "" });
 
-// 🔹 Columns
 const columns = computed(() => [
   { field: "SID", header: "ID", sortable: true, width: "80px" },
   { field: "Part", header: t("services.part") },
   { field: "Name", header: t("services.name") },
 ]);
 
-// 🔹 Load data
 onMounted(fetchServices);
 
 async function fetchServices() {
@@ -153,13 +147,11 @@ async function fetchServices() {
   }
 }
 
-// 🔹 Show details
 function showService(e) {
   selectedUser.value = e.data;
   UserDetailsDialogVisible.value = true;
 }
 
-// 🔹 Add / Edit dialog
 function openAddDialog() {
   form.value = { Part: "", Name: "" };
   isEditing.value = false;
@@ -174,7 +166,6 @@ function openEditDialog() {
   ServiceFormDialogVisible.value = true;
 }
 
-// 🔹 Save (create or update)
 async function saveService() {
   try {
     if (isEditing.value) {
@@ -191,7 +182,6 @@ async function saveService() {
   }
 }
 
-// 🔹 Delete
 async function deleteService() {
   if (!selectedUser.value) return;
   if (!confirm(t("services.confirm_delete"))) return;
@@ -207,7 +197,6 @@ async function deleteService() {
 </script>
 
 <style scoped>
-/* minimalne poprawki do mobile UX */
 @media (max-width: 640px) {
   .p-dialog {
     margin: 0 !important;

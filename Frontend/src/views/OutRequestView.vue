@@ -92,6 +92,7 @@
       modal
       :header="t('outRequest.review_title')"
       :style="{ width: '500px' }"
+      class="custom-dialog"
     >
       <div v-if="selected">
         <p class="mb-2">
@@ -286,3 +287,12 @@ async function doReject() {
   }
 }
 </script>
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+  padding: 1.2rem 1.5rem !important;
+}
+</style>

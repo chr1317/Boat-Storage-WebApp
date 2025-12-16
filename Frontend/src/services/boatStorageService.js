@@ -1,4 +1,3 @@
-// Frontend/src/services/boatStorageService.js
 import { apiFetch } from "./apiClient";
 
 
@@ -8,10 +7,7 @@ export function createBoatStorage(payload) {
     body: payload,
   });
 }
-/**
- * Pobranie rekordu BoatStorage po AID
- * używane na ekranie BoatStorageDetail
- */
+
 export function getBoatStorageById(AID) {
   return apiFetch(`/boatStorage/${AID}`);
 }
@@ -24,17 +20,10 @@ export function getLightBoatStorage() {
   return apiFetch("/boatStorage/light");
 }
 
-/**
- * Lista wszystkich przechowywań dla danej łodzi (historia sezonów)
- * używane na BoatDetailsView (dla BID)
- */
 export function getBoatStorageByBoat(BID) {
   return apiFetch(`/boatStorage/byBoat/${BID}`);
 }
 
-/**
- * Aktualne przechowywanie dla łodzi (do QR i przycisku „aktualny sezon”)
- */
 export function getActiveBoatStorage(BID) {
   return apiFetch(`/boatStorage/active/${BID}`);
 }

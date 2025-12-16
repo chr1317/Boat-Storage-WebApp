@@ -1,7 +1,6 @@
 const { models, sequelize } = require("../Database/db");
 const { Op } = require("sequelize");
 
-// check overlapping date ranges
 async function hasOverlap(start, end, ignoreId = null, t) {
   const where = {
     [Op.and]: [
@@ -14,39 +13,29 @@ async function hasOverlap(start, end, ignoreId = null, t) {
 }
 
 module.exports = {
-
-  // -------------------------------------------------------------------
-  // CREATE SEASON
-  // -------------------------------------------------------------------
   async create(req, res) {
   const t = await sequelize.transaction();
   try {
     const { year_start, year_end } = req.body;
 
-    // wymagane lata
     if (!Number.isInteger(year_start) || !Number.isInteger(year_end)) {
       await t.rollback();
       return res.status(400).json({ error: "year_start and year_end are required (integers)" });
     }
 
-    // zawsze różnica 1 roku
     if (year_end !== year_start + 1) {
       await t.rollback();
       return res.status(400).json({ error: "year_end must be exactly year_start + 1" });
     }
 
-    // stałe daty sezonu: 01.09 -> 31.08
-    // UWAGA: używam UTC, żeby uniknąć jazdy z timezone (DST) w MySQL/JS
-    const s = new Date(Date.UTC(year_start, 8, 1));   // Sep=8
-    const e = new Date(Date.UTC(year_end, 7, 31));    // Aug=7
+    const s = new Date(Date.UTC(year_start, 8, 1)); 
+    const e = new Date(Date.UTC(year_end, 7, 31));
 
-    // overlap check (zostaje jak masz)
     if (await hasOverlap(s, e, null, t)) {
       await t.rollback();
       return res.status(409).json({ error: "Conflict with existing season" });
     }
 
-    // opcjonalnie: blokada duplikatu kombinacji lat (przed create)
     const exists = await models.Seasons.findOne({
       where: { year_start, year_end },
       transaction: t
@@ -60,7 +49,6 @@ module.exports = {
       {
         year_start,
         year_end,
-        // dopasuj nazwy pól do modelu/tabeli:
         startDate: s,
         endDate: e
       },
@@ -76,10 +64,6 @@ module.exports = {
   }
 },
 
-
-  // -------------------------------------------------------------------
-  // LIST SEASONS
-  // -------------------------------------------------------------------
   async list(_req, res) {
     try {
       const seasons = await models.Seasons.findAll({
@@ -92,9 +76,6 @@ module.exports = {
     }
   },
 
-  // -------------------------------------------------------------------
-  // GET ONE
-  // -------------------------------------------------------------------
   async getOne(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
@@ -107,9 +88,6 @@ module.exports = {
     }
   },
 
-  // -------------------------------------------------------------------
-  // UPDATE
-  // -------------------------------------------------------------------
   async update(req, res) {
     const t = await sequelize.transaction();
     try {
@@ -164,15 +142,11 @@ module.exports = {
     }
   },
 
-  // -------------------------------------------------------------------
-  // DELETE (block if storage exists)
-  // -------------------------------------------------------------------
   async delete(req, res) {
     const t = await sequelize.transaction();
     try {
       const id = parseInt(req.params.id, 10);
-
-      // check linked boat_storage rows
+      
       const cnt = await models.BoatStorage.count({
         where: { seasonID: id },
         transaction: t,

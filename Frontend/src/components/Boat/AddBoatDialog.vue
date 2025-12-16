@@ -247,17 +247,6 @@ import { createBoat } from "../../services/boatService";
 import { getSeasons } from "../../services/seasonService";
 import { createBoatStorage } from "../../services/boatStorageService";
 
-/**
- * PrimeVue v4 Stepper API components
- * (jeśli masz global registration, importy nie są potrzebne,
- * ale lokalnie to jest 100% pewne)
- */
-import Stepper from "primevue/stepper";
-import StepList from "primevue/steplist";
-import Step from "primevue/step";
-import StepPanels from "primevue/steppanels";
-import StepPanel from "primevue/steppanel";
-
 const props = defineProps({ visible: Boolean });
 const emit = defineEmits(["update:visible", "created"]);
 
@@ -306,7 +295,6 @@ const engine = ref({
 
 const createStorage = ref(false);
 
-/* validation flags */
 const submittedStep1 = ref(false);
 const submittedStep2 = ref(false);
 
@@ -351,7 +339,6 @@ async function fetchCurrentSeason() {
   const seasons = await getSeasons();
   if (!Array.isArray(seasons) || seasons.length === 0) throw new Error("No seasons defined");
 
-  // najnowszy po seasonID
   return [...seasons].sort((a, b) => b.seasonID - a.seasonID)[0];
 }
 
@@ -368,7 +355,6 @@ async function submit() {
       await createBoatStorage({
         BID: newBoat.BID,
         seasonID: season.seasonID,
-        ArrivalDate: new Date().toISOString().slice(0, 10),
       });
     }
 
@@ -376,7 +362,6 @@ async function submit() {
     emit("created");
     emit("update:visible", false);
 
-    // reset
     activeStep.value = "1";
     submittedStep1.value = false;
     submittedStep2.value = false;

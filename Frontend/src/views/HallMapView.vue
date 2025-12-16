@@ -11,65 +11,106 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <span v-if="highlightBoatName" class="text-sm text-gray-600">
-          Highlight boat:
-          <strong>{{ highlightBoatName }}</strong>
+          Highlight boat: <strong>{{ highlightBoatName }}</strong>
         </span>
+
+        <div class="flex items-center gap-2">
+          <span
+            class="text-xs px-2 py-1 rounded-full"
+            :class="editMode ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-700'"
+          >
+            {{ editMode ? "EDIT MODE" : "VIEW MODE" }}
+          </span>
+
+          <Button
+            :icon="editMode ? 'pi pi-check' : 'pi pi-pencil'"
+            :label="editMode ? 'Finish editing' : 'Edit layout'"
+            :severity="editMode ? 'success' : 'warning'"
+            @click="toggleEdit"
+          />
+
+          <Button
+            icon="pi pi-save"
+            label="Save"
+            severity="secondary"
+            :disabled="dirtyBIDs.size === 0"
+            @click="saveDirtyPositions"
+          />
+        </div>
       </div>
     </div>
 
-    <!-- GŁÓWNY UKŁAD: lewy panel + mapa -->
     <div class="flex gap-4 flex-1 min-h-0">
-      <!-- PANEL Z ŁODZIAMI BEZ POZYCJI -->
       <div class="w-64 border p-3 rounded-xl overflow-auto bg-white">
         <h3 class="font-semibold mb-2">Unassigned boats</h3>
 
-        <div
-          v-if="freeBoats.length === 0"
-          class="text-xs text-gray-500 italic"
-        >
+        <div v-if="freeBoats.length === 0" class="text-xs text-gray-500 italic">
           All boats in this hall have positions.
         </div>
 
         <div
           v-for="boat in freeBoats"
           :key="boat.BID"
-          class="p-2 border rounded mb-2 cursor-pointer hover:bg-gray-100"
-          @dblclick="placeBoatFromList(boat)"
+          class="p-2 border rounded mb-2 hover:bg-gray-100"
         >
-          <div class="text-sm font-medium truncate">
-            {{ boat.name || ('BID ' + boat.BID) }}
-          </div>
-          <div class="text-xs text-gray-500 truncate">
-            Owner: {{ boat.User?.Name }} {{ boat.User?.Lastname }}
-          </div>
-          <div class="text-[10px] text-gray-400 mt-1">
-            (Double-click to place)
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-sm font-medium truncate">
+                {{ boat.name || ('BID ' + boat.BID) }}
+              </div>
+              <div class="text-xs text-gray-500 truncate">
+                Owner: {{ boat.User?.Name }} {{ boat.User?.Lastname }}
+              </div>
+              <div v-if="placingBoat?.BID === boat.BID" class="text-[10px] text-orange-600 mt-1">
+                Click on the map to place…
+              </div>
+            </div>
+
+            <Button
+              size="small"
+              icon="pi pi-plus"
+              :label="placingBoat?.BID === boat.BID ? 'Placing...' : 'Place'"
+              :severity="placingBoat?.BID === boat.BID ? 'warning' : 'primary'"
+              @click="startPlacingBoat(boat)"
+            />
           </div>
         </div>
       </div>
 
-      <!-- MAPA -->
       <div class="flex-1 border rounded-xl overflow-hidden relative">
         <div ref="mapEl" class="w-full h-full"></div>
 
-        <!-- fallback overlay gdy brak pozycji -->
         <div
           v-if="!loading && (!hall || positions.length === 0)"
           class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm pointer-events-none"
         >
           No positions for this hall.
         </div>
+
+        <div
+          class="absolute bottom-3 left-3 text-xs px-2 py-1 rounded bg-white/80 border text-gray-600"
+        >
+          <span v-if="placingBoat">
+            Placing boat: click on the map. (ESC cancels)
+          </span>
+          <span v-else-if="editMode">
+            Drag boats to move. Changes are saved only after clicking Save / Finish editing.
+          </span>
+          <span v-else>
+            View mode – editing disabled.
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- PRZYCISK "ZAPISZ UKŁAD" (opcjonalny, wszystko i tak zapisujemy na bieżąco) -->
+    <!-- INFO -->
     <div class="flex justify-end">
       <Button
-        icon="pi pi-save"
-        label="Save layout"
-        severity="success"
+        icon="pi pi-info-circle"
+        label="Info"
+        severity="secondary"
         @click="saveLayout"
       />
     </div>
@@ -77,18 +118,9 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  onMounted,
-  watch,
-  computed,
-  onBeforeUnmount,
-  nextTick,
-} from "vue";
+import { ref, onMounted, watch, computed, onBeforeUnmount, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
-
-import Button from "primevue/button";
 
 import { getBoathall } from "../services/boathallService";
 import {
@@ -97,10 +129,8 @@ import {
   updateBoatPosition,
   deleteBoatPosition,
 } from "../services/boatPositionService";
-
 import { getBoats, updateBoat } from "../services/boatService";
 
-// OpenLayers
 import Map from "ol/Map";
 import View from "ol/View";
 import { Vector as VectorLayer } from "ol/layer";
@@ -109,8 +139,6 @@ import { Feature } from "ol";
 import Polygon from "ol/geom/Polygon";
 import { Style, Stroke, Fill, Text } from "ol/style";
 import Translate from "ol/interaction/Translate";
-import { Select } from "ol/interaction";
-
 import "ol/ol.css";
 
 const route = useRoute();
@@ -118,19 +146,23 @@ const toast = useToast();
 
 const mapEl = ref(null);
 const map = ref(null);
+
 const vectorSource = new VectorSource();
 const vectorLayer = new VectorLayer({ source: vectorSource });
+
 let translateInteraction = null;
-let selectInteraction = null;
 
 const hall = ref(null);
-const positions = ref([]); // pozycje z backendu + Boat
+const positions = ref([]);
 const loading = ref(true);
+const freeBoats = ref([]);
 
-const freeBoats = ref([]); // łodzie bez pozycji w tej hali + w ogóle nie przypisane
-// (draggedBoat już nie używamy – było do drag&drop z listy)
+const editMode = ref(false);
 
-// ?boat=ID w URL, np. /hall/1?boat=2
+const placingBoat = ref(null);
+
+const dirtyBIDs = ref(new Set());
+
 const highlightBoatId = computed(() => {
   const val = route.query.boat;
   return val ? Number(val) : null;
@@ -141,159 +173,219 @@ const highlightBoatName = computed(() => {
   return b?.Boat?.name || null;
 });
 
-//
-// -------------------- POMOCNICZE: KOLIZJE --------------------
-//
-function intersects(a, b) {
-  return !(
-    a.PosX + a.Width <= b.PosX ||
-    a.PosX >= b.PosX + b.Width ||
-    a.PosY + a.Length <= b.PosY ||
-    a.PosY >= b.PosY + b.Length
-  );
+function clampToHall(pos) {
+  if (!hall.value) return pos;
+  const hallW = Number(hall.value.Width);
+  const hallL = Number(hall.value.Length);
+
+  const w = Number(pos.Width);
+  const l = Number(pos.Length);
+
+  let x = Number(pos.PosX);
+  let y = Number(pos.PosY);
+
+  if (x < 0) x = 0;
+  if (y < 0) y = 0;
+  if (x + w > hallW) x = Math.max(0, hallW - w);
+  if (y + l > hallL) y = Math.max(0, hallL - l);
+
+  return { ...pos, PosX: x, PosY: y };
 }
 
-function collides(item, list, hallObj) {
-  const hallWidth = Number(hallObj.Width);
-  const hallLength = Number(hallObj.Length);
-
-  if (
-    item.PosX < 0 ||
-    item.PosY < 0 ||
-    item.PosX + item.Width > hallWidth ||
-    item.PosY + item.Length > hallLength
-  ) {
-    return true;
-  }
-
-  return list.some((p) => p.BID !== item.BID && intersects(item, p));
-}
-
-//
-// -------------------- ZAPIS/UPDATE POZYCJI W BACKENDZIE --------------------
-//
 async function saveOrUpdatePosition(pos) {
-  // jeśli pozycja już ma ID → UPDATE
   if (pos.PositionID) {
     await updateBoatPosition(pos.PositionID, {
       PosX: pos.PosX,
       PosY: pos.PosY,
-      Width: pos.Width,
-      Length: pos.Length,
       BHID: hall.value.BHID,
       BID: pos.BID,
     });
     return;
   }
 
-  // pierwszy raz → CREATE
   const created = await createBoatPosition({
     BHID: hall.value.BHID,
     BID: pos.BID,
     PosX: pos.PosX,
     PosY: pos.PosY,
-    Width: pos.Width,
-    Length: pos.Length,
   });
 
-  // backend powinien zwrócić PositionID
   pos.PositionID = created.PositionID || created.PositionId || created.id;
 }
 
-//
-// -------------------- DRAGOWANIE ŁODZI NA MAPIE --------------------
-//
+function setCursor(cursor) {
+  if (!map.value?.getTargetElement) return;
+  const el = map.value.getTargetElement();
+  if (!el) return;
+  el.style.cursor = cursor;
+}
+
+function disableDragging() {
+  if (!map.value) return;
+
+  map.value.getInteractions().getArray()
+    .filter(i => i instanceof Translate)
+    .forEach(i => map.value.removeInteraction(i));
+
+  translateInteraction = null;
+
+  setCursor("default");
+}
+
+
 function enableBoatDragging() {
   if (!map.value) return;
 
-  // usuń stare interakcje jeśli były
-  if (translateInteraction) map.value.removeInteraction(translateInteraction);
-  if (selectInteraction) map.value.removeInteraction(selectInteraction);
+  disableDragging();
 
-  // zaznaczanie feature – tylko łodzie
-  selectInteraction = new Select({
-    layers: [vectorLayer],
-    filter: (feature) => feature.isBoat === true,
-  });
-
-  // przeciąganie
   translateInteraction = new Translate({
-    features: selectInteraction.getFeatures(),
+    layers: [vectorLayer],
+    filter: (feature) => feature?.isBoat === true,
+    hitTolerance: 6,
   });
 
-  // po skończonym przeciąganiu (puszczenie myszy)
-  translateInteraction.on("translateend", async (e) => {
-    const f = e.features.item(0);
+  translateInteraction.on("translateend", (e) => {
+    if (!editMode.value) return;
+
+    const f = e.features?.item(0);
     if (!f) return;
 
     const geom = f.getGeometry();
     const coords = geom.getCoordinates()[0];
 
-    // nowy X,Y → lewy dolny róg
-    const newX = coords[0][0];
+    const newXraw = coords[0][0];
     const newYmapped = coords[0][1];
     const L = Number(hall.value.Length);
 
     const p = positions.value.find((pos) => pos.BID === f.BID);
     if (!p) return;
 
-    const oldPos = { ...p };
+    p.PosX = Number(newXraw);
+    p.PosY = Number(L - newYmapped - p.Length);
 
-    p.PosX = newX;
-    p.PosY = L - newYmapped - p.Length;
+    const clamped = clampToHall(p);
+    p.PosX = clamped.PosX;
+    p.PosY = clamped.PosY;
 
-    if (collides(p, positions.value, hall.value)) {
-      toast.add({
-        severity: "warn",
-        summary: "Collision",
-        detail: "Boat overlaps another or goes out of hall.",
-        life: 1500,
-      });
-
-      // przywróć stare współrzędne
-      p.PosX = oldPos.PosX;
-      p.PosY = oldPos.PosY;
-      drawHallAndBoats();
-      return;
-    }
-
-    try {
-      await saveOrUpdatePosition(p);
-      toast.add({
-        severity: "success",
-        summary: "Position saved",
-        life: 1000,
-      });
-    } catch (err) {
-      console.error(err);
-      // rollback przy błędzie backendu
-      p.PosX = oldPos.PosX;
-      p.PosY = oldPos.PosY;
-      toast.add({
-        severity: "error",
-        summary: "Error",
-        detail: "Failed to save position",
-        life: 2500,
-      });
-    }
+    dirtyBIDs.value.add(p.BID);
 
     drawHallAndBoats();
   });
 
-  map.value.addInteraction(selectInteraction);
   map.value.addInteraction(translateInteraction);
+  setCursor("move");
 }
 
-//
-// -------------------- INIT MAPY --------------------
-//
+async function toggleEdit() {
+  if (editMode.value) {
+    editMode.value = false;
+
+    disableDragging();
+
+    if (dirtyBIDs.value.size > 0) {
+      await saveDirtyPositions();
+    }
+
+    drawHallAndBoats();
+    return;
+  }
+
+  placingBoat.value = null;
+  editMode.value = true;
+
+  enableBoatDragging();
+}
+
+
+async function saveDirtyPositions() {
+  if (!hall.value) return;
+
+  const hallW = Number(hall.value.Width);
+  const hallL = Number(hall.value.Length);
+
+  const toSave = positions.value.filter((p) => dirtyBIDs.value.has(p.BID));
+  if (toSave.length === 0) return;
+
+  for (const p of toSave) {
+    const x = Number(p.PosX);
+    const y = Number(p.PosY);
+    const w = Number(p.Width);
+    const l = Number(p.Length);
+
+    if (
+      Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(w) || Number.isNaN(l) ||
+      x < 0 || y < 0 ||
+      x + w > hallW ||
+      y + l > hallL
+    ) {
+      toast.add({
+        severity: "warn",
+        summary: "Invalid position",
+        detail: "Boat must be fully inside the hall before saving.",
+        life: 2500,
+      });
+      return;
+    }
+  }
+
+  try {
+    for (const p of toSave) {
+      await saveOrUpdatePosition(p);
+    }
+
+    dirtyBIDs.value.clear();
+
+    toast.add({
+      severity: "success",
+      summary: "Saved",
+      detail: `Saved ${toSave.length} position(s).`,
+      life: 1200,
+    });
+
+    await loadData();
+  } catch (err) {
+    console.error(err);
+
+    toast.add({
+      severity: "error",
+      summary: "Save failed",
+      detail: err?.message || "Backend rejected at least one position.",
+      life: 3000,
+    });
+
+    dirtyBIDs.value.clear();
+    await loadData();
+  }
+}
+
+function startPlacingBoat(boat) {
+    editMode.value = false;
+    disableDragging();
+  
+
+  placingBoat.value = boat;
+  setCursor("crosshair");
+
+  toast.add({
+    severity: "info",
+    summary: "Place mode",
+    detail: "Click on the map to place the boat. Press ESC to cancel.",
+    life: 2500,
+  });
+}
+
+function cancelPlacing() {
+  placingBoat.value = null;
+  setCursor("default");
+}
+
 function initMap() {
   if (!mapEl.value) return;
 
   map.value = new Map({
     target: mapEl.value,
     layers: [vectorLayer],
-    interactions: [], // własne interakcje zarządzamy ręcznie
+    interactions: [],
     controls: [],
     view: new View({
       center: [0, 0],
@@ -303,9 +395,61 @@ function initMap() {
     }),
   });
 
-  // PRAWY KLIK NA MAPIE → USUNIĘCIE ŁODZI Z HALI
+  map.value.on("singleclick", async (e) => {
+    if (!placingBoat.value) return;
+    if (!hall.value) return;
+
+    const boat = placingBoat.value;
+
+    const [x, yMapped] = e.coordinate;
+    const hallLength = Number(hall.value.Length);
+
+    const posX = Math.round(x);
+    const posY = Math.round(hallLength - yMapped);
+
+    try {
+      await updateBoat(boat.BID, { BHID: hall.value.BHID });
+
+      await createBoatPosition({
+        BHID: hall.value.BHID,
+        BID: boat.BID,
+        PosX: posX,
+        PosY: posY,
+      });
+
+      toast.add({
+        severity: "success",
+        summary: "Boat placed",
+        detail: "Position created.",
+        life: 1200,
+      });
+
+      cancelPlacing();
+      editMode.value = false;
+      disableDragging();
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      toast.add({
+        severity: "error",
+        summary: "Cannot place boat",
+        detail: err?.message || "Collision or out of bounds.",
+        life: 3000,
+      });
+
+      try {
+        await updateBoat(boat.BID, { BHID: null });
+      } catch (_) {}
+    }
+  });
+
+  window.addEventListener("keydown", onKeyDown);
+
   map.value.on("contextmenu", async (e) => {
     e.preventDefault();
+    if (!map.value) return;
+
+    if (placingBoat.value) return;
 
     const pixel = map.value.getEventPixel(e.originalEvent);
     const feature = map.value.forEachFeatureAtPixel(pixel, (f) => f);
@@ -316,25 +460,12 @@ function initMap() {
     const pos = positions.value.find((p) => p.BID === bid);
     if (!pos) return;
 
-    const positionId = pos.PositionID;
-
     try {
-      // 1️⃣ usuń pozycję po PositionID
-      if (positionId) {
-        await deleteBoatPosition(positionId);
-      }
-
-      // 2️⃣ odspawaj łódź od hali (BHID = null)
+      if (pos.PositionID) await deleteBoatPosition(pos.PositionID);
       await updateBoat(bid, { BHID: null });
 
-      // 3️⃣ frontend: usuń z positions, dodaj do freeBoats
-      positions.value = positions.value.filter((p) => p.BID !== bid);
-
-      const boat = pos.Boat;
-      if (boat) {
-        boat.BHID = null;
-        freeBoats.value.push(boat);
-      }
+      dirtyBIDs.value.delete(bid);
+      await loadData();
 
       toast.add({
         severity: "success",
@@ -342,8 +473,6 @@ function initMap() {
         detail: "Position deleted and BHID cleared.",
         life: 1500,
       });
-
-      drawHallAndBoats();
     } catch (err) {
       console.error(err);
       toast.add({
@@ -356,142 +485,37 @@ function initMap() {
   });
 }
 
-//
-// -------------------- AUTO-UMIESZCZENIE ŁODZI Z LISTY (DOUBLE-CLICK) --------------------
-//
-async function placeBoatFromList(boat) {
-  if (!hall.value) return;
-
-  const hallWidth = Number(hall.value.Width);
-  const hallLength = Number(hall.value.Length);
-
-  // rozmiar łodzi – z dimensions, jak nie ma to domyślne
-  const defaultW = Number(
-    boat.BoatDimensions?.Width || boat.Width || 200
-  );
-  const defaultH = Number(
-    boat.BoatDimensions?.Length || boat.Length || 600
-  );
-
-  // prosty grid do szukania pierwszego wolnego miejsca
-  const step = 50; // możesz zmienić np. na 100 lub margin z hali
-
-  let found = null;
-
-  outer: for (let y = 0; y <= hallLength - defaultH; y += step) {
-    for (let x = 0; x <= hallWidth - defaultW; x += step) {
-      const candidate = {
-        BID: boat.BID,
-        PosX: x,
-        PosY: y,
-        Width: defaultW,
-        Length: defaultH,
-      };
-
-      if (!collides(candidate, positions.value, hall.value)) {
-        found = candidate;
-        break outer;
-      }
-    }
-  }
-
-  if (!found) {
-    toast.add({
-      severity: "warn",
-      summary: "No space",
-      detail: "No free spot found for this boat.",
-      life: 2500,
-    });
-    return;
-  }
-
-  try {
-    // zapis pozycji
-    await updateBoat(boat.BID, { BHID: hall.value.BHID });
-
-    const created = await createBoatPosition({
-      BHID: hall.value.BHID,
-      BID: boat.BID,
-      PosX: found.PosX,
-      PosY: found.PosY,
-      Width: found.Width,
-      Length: found.Length,
-    });
-
-    const positionId = created.PositionID || created.PositionId || created.id;
-
-    // przypisz łódź do hali (BHID)
-    
-    // aktualizacja frontu
-    const boatWithHall = { ...boat, BHID: hall.value.BHID };
-
-    positions.value.push({
-      PositionID: positionId,
-      BHID: hall.value.BHID,
-      BID: boat.BID,
-      PosX: found.PosX,
-      PosY: found.PosY,
-      Width: found.Width,
-      Length: found.Length,
-      Boat: boatWithHall,
-    });
-
-    freeBoats.value = freeBoats.value.filter((b) => b.BID !== boat.BID);
-
-    toast.add({
-      severity: "success",
-      summary: "Boat placed",
-      detail: "Boat placed at first free spot.",
-      life: 1500,
-    });
-
-    drawHallAndBoats();
-  } catch (err) {
-    console.error(err);
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: "Failed to place boat",
-      life: 2500,
-    });
+function onKeyDown(e) {
+  if (e.key === "Escape" && placingBoat.value) {
+    cancelPlacing();
   }
 }
 
-//
-// -------------------- ŁADOWANIE DANYCH --------------------
-//
 async function loadData() {
   try {
     loading.value = true;
     const bhid = Number(route.params.id);
 
-    // dane hali
     hall.value = await getBoathall(bhid);
 
-    // istniejące pozycje łodzi
     const rawPositions = await getHallPositions(bhid);
-
-    // wszystkie łodzie
     const allBoats = await getBoats();
 
-    // pozycje + powiązane łodzie
     positions.value = rawPositions.map((p) => ({
       ...p,
       Boat: allBoats.find((b) => b.BID === p.BID) || null,
     }));
 
-    // łodzie przypisane do tej hali BEZ pozycji
     const boatsAssignedNoPos = allBoats.filter(
       (b) => b.BHID === bhid && !positions.value.some((p) => p.BID === b.BID)
     );
 
-    // łodzie w ogóle nieprzypisane (BHID null)
     const boatsUnassigned = allBoats.filter((b) => b.BHID === null);
 
     freeBoats.value = [...boatsAssignedNoPos, ...boatsUnassigned];
 
     await nextTick();
-    drawHallAndBoats();
+    await drawHallAndBoats();
   } catch (e) {
     console.error(e);
     toast.add({
@@ -505,26 +529,16 @@ async function loadData() {
   }
 }
 
-//
-// -------------------- RYSOWANIE HALI I ŁODZI --------------------
-//
 async function drawHallAndBoats() {
-  if (!map.value || !hall.value) {
-    console.warn("drawHallAndBoats: no map or hall yet");
-    return;
-  }
+  if (!map.value || !hall.value) return;
 
+  disableDragging();
   vectorSource.clear();
 
-  const hallWidth = Number(hall.value.Width); // cm (X)
-  const hallLength = Number(hall.value.Length); // cm (Y)
+  const hallWidth = Number(hall.value.Width);
+  const hallLength = Number(hall.value.Length);
+  if (!hallWidth || !hallLength) return;
 
-  if (!hallWidth || !hallLength) {
-    console.warn("Invalid hall dimensions:", hall.value);
-    return;
-  }
-
-  // prostokąt hali
   const hallGeom = new Polygon([
     [
       [0, 0],
@@ -545,21 +559,15 @@ async function drawHallAndBoats() {
   hallFeature.isBoat = false;
   vectorSource.addFeature(hallFeature);
 
-  // łodzie
   positions.value.forEach((pos) => {
     const x = Number(pos.PosX);
     const y = Number(pos.PosY);
     const w = Number(pos.Width);
     const h = Number(pos.Length);
 
-    if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h)) {
-      console.warn("Invalid position for boat:", pos);
-      return;
-    }
+    if ([x, y, w, h].some((n) => Number.isNaN(n))) return;
 
     const isHighlighted = highlightBoatId.value === pos.BID;
-
-    // odwrócenie osi Y – PosY liczony od góry
     const yMapped = hallLength - y - h;
 
     const geom = new Polygon([
@@ -575,6 +583,7 @@ async function drawHallAndBoats() {
     const f = new Feature(geom);
 
     const baseColor = isHighlighted ? "#2563eb" : "#0f766e";
+    const isDirty = dirtyBIDs.value.has(pos.BID);
 
     f.setStyle(
       new Style({
@@ -583,7 +592,9 @@ async function drawHallAndBoats() {
           width: isHighlighted ? 3 : 1.5,
         }),
         fill: new Fill({
-          color: isHighlighted
+          color: isDirty
+            ? "rgba(245,158,11,0.35)"
+            : isHighlighted
             ? "rgba(37,99,235,0.35)"
             : "rgba(15,118,110,0.25)",
         }),
@@ -600,58 +611,52 @@ async function drawHallAndBoats() {
     vectorSource.addFeature(f);
   });
 
-  // dopasuj widok do hali
   const extent = [0, 0, hallWidth, hallLength];
   await nextTick();
-map.value.updateSize();
-map.value.getView().fit(extent, {
-  size: map.value.getSize(),
-  padding: [20, 20, 20, 20],
-  constrainResolution: false,
-});
+  map.value.updateSize();
+  map.value.getView().fit(extent, {
+    size: map.value.getSize(),
+    padding: [20, 20, 20, 20],
+    constrainResolution: false,
+  });
 
-
-  enableBoatDragging();
+  if (placingBoat.value) {
+    disableDragging();
+    setCursor("crosshair");
+    return;
+  }
 }
 
-//
-// -------------------- "ZAPISZ UKŁAD" (opcjonalne) --------------------
-//
-async function saveLayout() {
-  // wszystko i tak jest zapisywane na bieżąco (create/update przy ruchu),
-  // więc tutaj tylko info:
-  console.log("Current layout:", positions.value);
+function saveLayout() {
   toast.add({
     severity: "info",
     summary: "Layout",
-    detail: "Layout is saved automatically on every move / add / delete.",
+    detail: placingBoat.value
+      ? "Place mode: click map to place. ESC cancels."
+      : "Edit mode: drag boats. Save/Finish to persist.",
     life: 2500,
   });
 }
 
-//
-// -------------------- LIFECYCLE --------------------
-//
 onMounted(async () => {
   initMap();
   await loadData();
 });
 
-// przeładowanie przy zmianie query ?boat=...
-watch(highlightBoatId, () => {
-  drawHallAndBoats();
-});
-
-// jeśli zmieni się id hali w URL
 watch(
   () => route.params.id,
   async () => {
+    editMode.value = false;
+    dirtyBIDs.value.clear();
+    cancelPlacing();
     await loadData();
   }
 );
 
 onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeyDown);
   if (map.value) {
+    disableDragging();
     map.value.setTarget(null);
     map.value = null;
   }

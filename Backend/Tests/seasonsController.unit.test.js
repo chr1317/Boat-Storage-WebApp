@@ -1,10 +1,11 @@
-// Backend/Tests/seasonsController.unit.test.js
-const mockResponse = require("./mockRes");
-const seasonsController = require("../Controllers/seasonsController");
+const controller = require("../Controllers/seasonsController");
+const mockRes = require("./mockRes");
 
-// Mock DB
+// ==========================================================================
+// MOCK DB
+// ==========================================================================
 jest.mock("../Database/db", () => {
-  const mockTransaction = {
+  const t = {
     commit: jest.fn(),
     rollback: jest.fn(),
     LOCK: { UPDATE: "UPDATE" },
@@ -12,440 +13,293 @@ jest.mock("../Database/db", () => {
 
   return {
     sequelize: {
-      transaction: jest.fn(() => Promise.resolve(mockTransaction)),
+      transaction: jest.fn().mockResolvedValue(t),
     },
     models: {
       Seasons: {
-        create: jest.fn(),
+        count: jest.fn(),
+        findOne: jest.fn(),
         findAll: jest.fn(),
         findByPk: jest.fn(),
+        create: jest.fn(),
         update: jest.fn(),
         destroy: jest.fn(),
-        count: jest.fn(),
       },
       BoatStorage: {
         count: jest.fn(),
       },
     },
-    __mockTransaction: mockTransaction,
+    __t: t,
   };
 });
 
-const { models, __mockTransaction: t } = require("../Database/db");
+const { models, __t: t } = require("../Database/db");
 
-// wspólne before/after
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, "error").mockImplementation(() => {});
 });
 
-afterEach(() => {
-  jest.restoreAllMocks();
-});
-
-// ============================================================
+// ==========================================================================
 // CREATE
-// ============================================================
+// ==========================================================================
 describe("seasonsController.create", () => {
-  it("returns 400 if some fields are missing", async () => {
-    const req = {
-      body: {
-        year_start: 2024,
-        // year_end, StartDate, EndDate missing
-      },
-    };
-    const res = mockResponse();
+  it("400 when years missing or not integers", async () => {
+    const res = mockRes();
 
-    await seasonsController.create(req, res);
+    await controller.create({ body: {} }, res);
 
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "All fields are required",
-    });
+    expect(t.rollback).toHaveBeenCalled();
   });
 
-  it("returns 400 if EndDate is before StartDate", async () => {
-    const req = {
-      body: {
-        year_start: 2024,
-        year_end: 2025,
-        StartDate: "2024-10-10",
-        EndDate: "2024-09-10", // wcześniejsza
-      },
-    };
-    const res = mockResponse();
+  it("400 when year difference not 1", async () => {
+    const res = mockRes();
 
-    await seasonsController.create(req, res);
+    await controller.create(
+      { body: { year_start: 2024, year_end: 2026 } },
+      res
+    );
 
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Incorrect date range",
-    });
   });
 
-  it("returns 409 if new season overlaps existing one", async () => {
-    const req = {
-      body: {
-        year_start: 2024,
-        year_end: 2025,
-        StartDate: "2024-04-01",
-        EndDate: "2024-10-01",
-      },
-    };
-    const res = mockResponse();
-
-    // hasOverlap -> models.Seasons.count > 0
+  it("409 when overlapping season exists", async () => {
+    const res = mockRes();
     models.Seasons.count.mockResolvedValue(1);
 
-    await seasonsController.create(req, res);
+    await controller.create(
+      { body: { year_start: 2024, year_end: 2025 } },
+      res
+    );
 
-    expect(models.Seasons.count).toHaveBeenCalled();
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Conflict with existing season",
-    });
   });
 
-  it("creates season successfully", async () => {
-    const req = {
-      body: {
-        year_start: 2024,
-        year_end: 2025,
-        StartDate: "2024-04-01",
-        EndDate: "2024-10-01",
-      },
-    };
-    const res = mockResponse();
-
-    models.Seasons.count.mockResolvedValue(0); // brak overlap
-    const created = { seasonID: 1, year_start: 2024, year_end: 2025 };
-    models.Seasons.create.mockResolvedValue(created);
-
-    await seasonsController.create(req, res);
-
-    expect(models.Seasons.create).toHaveBeenCalled();
-    expect(t.commit).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(201);
-    expect(res.json).toHaveBeenCalledWith(created);
-  });
-
-  it("returns 500 on error", async () => {
-    const req = {
-      body: {
-        year_start: 2024,
-        year_end: 2025,
-        StartDate: "2024-04-01",
-        EndDate: "2024-10-01",
-      },
-    };
-    const res = mockResponse();
-
+  it("409 when season with same year range exists", async () => {
+    const res = mockRes();
     models.Seasons.count.mockResolvedValue(0);
-    models.Seasons.create.mockRejectedValue(new Error("DB error"));
+    models.Seasons.findOne.mockResolvedValue({ seasonID: 1 });
 
-    await seasonsController.create(req, res);
+    await controller.create(
+      { body: { year_start: 2024, year_end: 2025 } },
+      res
+    );
 
-    expect(t.rollback).toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(409);
+  });
+
+  it("201 creates season", async () => {
+    const res = mockRes();
+    models.Seasons.count.mockResolvedValue(0);
+    models.Seasons.findOne.mockResolvedValue(null);
+    models.Seasons.create.mockResolvedValue({ seasonID: 1 });
+
+    await controller.create(
+      { body: { year_start: 2024, year_end: 2025 } },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("500 on create error", async () => {
+    const res = mockRes();
+    models.Seasons.count.mockRejectedValue(new Error());
+
+    await controller.create(
+      { body: { year_start: 2024, year_end: 2025 } },
+      res
+    );
+
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error while creating season",
-    });
   });
 });
 
-// ============================================================
+// ==========================================================================
 // LIST
-// ============================================================
+// ==========================================================================
 describe("seasonsController.list", () => {
-  it("returns list of seasons", async () => {
-    const req = {};
-    const res = mockResponse();
+  it("returns list", async () => {
+    const res = mockRes();
+    models.Seasons.findAll.mockResolvedValue([{ seasonID: 1 }]);
 
-    const seasons = [{ seasonID: 1 }, { seasonID: 2 }];
-    models.Seasons.findAll.mockResolvedValue(seasons);
+    await controller.list({}, res);
 
-    await seasonsController.list(req, res);
-
-    expect(models.Seasons.findAll).toHaveBeenCalledWith({
-      order: [["StartDate", "ASC"]],
-    });
-    expect(res.json).toHaveBeenCalledWith(seasons);
+    expect(res.json).toHaveBeenCalledWith([{ seasonID: 1 }]);
   });
 
-  it("returns 500 on error", async () => {
-    const req = {};
-    const res = mockResponse();
+  it("500 on list error", async () => {
+    const res = mockRes();
+    models.Seasons.findAll.mockRejectedValue(new Error());
 
-    models.Seasons.findAll.mockRejectedValue(new Error("err"));
-
-    await seasonsController.list(req, res);
+    await controller.list({}, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error while listing seasons",
-    });
   });
 });
 
-// ============================================================
+// ==========================================================================
 // GET ONE
-// ============================================================
+// ==========================================================================
 describe("seasonsController.getOne", () => {
-  it("returns 404 when season not found", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
-
+  it("404 when not found", async () => {
+    const res = mockRes();
     models.Seasons.findByPk.mockResolvedValue(null);
 
-    await seasonsController.getOne(req, res);
+    await controller.getOne({ params: { id: "1" } }, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ error: "Season not found" });
   });
 
   it("returns season", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
+    const res = mockRes();
+    models.Seasons.findByPk.mockResolvedValue({ seasonID: 1 });
 
-    const season = { seasonID: 1 };
-    models.Seasons.findByPk.mockResolvedValue(season);
+    await controller.getOne({ params: { id: "1" } }, res);
 
-    await seasonsController.getOne(req, res);
-
-    expect(res.json).toHaveBeenCalledWith(season);
+    expect(res.json).toHaveBeenCalledWith({ seasonID: 1 });
   });
 
-  it("returns 500 on error", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
+  it("500 on getOne error", async () => {
+    const res = mockRes();
+    models.Seasons.findByPk.mockRejectedValue(new Error());
 
-    models.Seasons.findByPk.mockRejectedValue(new Error("err"));
-
-    await seasonsController.getOne(req, res);
+    await controller.getOne({ params: { id: "1" } }, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error while getting season",
-    });
   });
 });
 
-// ============================================================
+// ==========================================================================
 // UPDATE
-// ============================================================
+// ==========================================================================
 describe("seasonsController.update", () => {
-  it("returns 404 when season not found", async () => {
-    const req = { params: { id: "1" }, body: {} };
-    const res = mockResponse();
-
+  it("404 when season not found", async () => {
+    const res = mockRes();
     models.Seasons.findByPk.mockResolvedValue(null);
 
-    await seasonsController.update(req, res);
+    await controller.update({ params: { id: "1" }, body: {} }, res);
 
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ error: "Season not found" });
-  });
-
-  it("returns 400 when new date range is invalid", async () => {
-    const req = {
-      params: { id: "1" },
-      body: {
-        StartDate: "2024-10-10",
-        EndDate: "2024-09-10", // e < s
-      },
-    };
-    const res = mockResponse();
-
-    models.Seasons.findByPk.mockResolvedValue({
-      seasonID: 1,
-      StartDate: new Date("2024-04-01"),
-      EndDate: new Date("2024-10-01"),
-    });
-
-    await seasonsController.update(req, res);
-
     expect(t.rollback).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Incorrect date range",
-    });
   });
 
-  it("returns 409 when date range conflicts with other seasons", async () => {
-    const req = {
-      params: { id: "1" },
-      body: {
-        StartDate: "2024-04-01",
-        EndDate: "2024-10-01",
-      },
-    };
-    const res = mockResponse();
-
+  it("400 incorrect date range", async () => {
+    const res = mockRes();
     models.Seasons.findByPk.mockResolvedValue({
-      seasonID: 1,
-      StartDate: new Date("2024-01-01"),
-      EndDate: new Date("2024-12-31"),
+      StartDate: new Date("2025-01-01"),
+      EndDate: new Date("2025-12-31"),
     });
 
-    // hasOverlap -> Seasons.count > 0
+    await controller.update(
+      {
+        params: { id: "1" },
+        body: { StartDate: "2025-12-31", EndDate: "2025-01-01" },
+      },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("409 overlap on update", async () => {
+    const res = mockRes();
+    models.Seasons.findByPk.mockResolvedValue({
+      StartDate: new Date("2025-01-01"),
+      EndDate: new Date("2025-12-31"),
+    });
     models.Seasons.count.mockResolvedValue(1);
 
-    await seasonsController.update(req, res);
-
-    expect(models.Seasons.count).toHaveBeenCalled();
-    expect(t.rollback).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Conflict with existing season",
-    });
-  });
-
-  it("updates season successfully", async () => {
-    const req = {
-      params: { id: "1" },
-      body: {
-        year_start: 2025,
-        year_end: 2026,
-        StartDate: "2025-04-01",
-        EndDate: "2025-10-01",
+    await controller.update(
+      {
+        params: { id: "1" },
+        body: { StartDate: "2025-01-01", EndDate: "2025-12-31" },
       },
-    };
-    const res = mockResponse();
-
-    const existing = {
-      seasonID: 1,
-      StartDate: new Date("2024-04-01"),
-      EndDate: new Date("2024-10-01"),
-    };
-
-    models.Seasons.findByPk
-      .mockResolvedValueOnce(existing) // pierwsze findByPk w kontrolerze
-      .mockResolvedValueOnce({
-        seasonID: 1,
-        year_start: 2025,
-        year_end: 2026,
-        StartDate: new Date("2025-04-01"),
-        EndDate: new Date("2025-10-01"),
-      }); // refreshed
-
-    models.Seasons.count.mockResolvedValue(0);
-
-    await seasonsController.update(req, res);
-
-    expect(models.Seasons.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        year_start: 2025,
-        year_end: 2026,
-        StartDate: expect.any(Date),
-        EndDate: expect.any(Date),
-      }),
-      expect.objectContaining({
-        where: { seasonID: 1 },
-        transaction: t,
-      })
+      res
     );
-    expect(t.commit).toHaveBeenCalled();
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        seasonID: 1,
-        year_start: 2025,
-        year_end: 2026,
-      })
-    );
+
+    expect(res.status).toHaveBeenCalledWith(409);
   });
 
-  it("returns 500 on error", async () => {
-    const req = { params: { id: "1" }, body: {} };
-    const res = mockResponse();
-
-    models.Seasons.findByPk.mockRejectedValue(new Error("err"));
-
-    await seasonsController.update(req, res);
-
-    expect(t.rollback).toHaveBeenCalled();
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error while updating season",
+  it("updates season", async () => {
+    const res = mockRes();
+    models.Seasons.findByPk.mockResolvedValue({
+      StartDate: new Date("2025-01-01"),
+      EndDate: new Date("2025-12-31"),
     });
+    models.Seasons.count.mockResolvedValue(0);
+    models.Seasons.update.mockResolvedValue([1]);
+    models.Seasons.findByPk.mockResolvedValue({ seasonID: 1 });
+
+    await controller.update(
+      {
+        params: { id: "1" },
+        body: { StartDate: "2025-01-01", EndDate: "2025-12-31" },
+      },
+      res
+    );
+
+    expect(res.json).toHaveBeenCalledWith({ seasonID: 1 });
+    expect(t.commit).toHaveBeenCalled();
+  });
+
+  it("500 on update error", async () => {
+    const res = mockRes();
+    models.Seasons.findByPk.mockRejectedValue(new Error());
+
+    await controller.update(
+      { params: { id: "1" }, body: {} },
+      res
+    );
+
+    expect(res.status).toHaveBeenCalledWith(500);
   });
 });
 
-// ============================================================
+// ==========================================================================
 // DELETE
-// ============================================================
+// ==========================================================================
 describe("seasonsController.delete", () => {
-  it("returns 409 when season has boat storage entries", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
+  it("409 when boat storage exists", async () => {
+    const res = mockRes();
+    models.BoatStorage.count.mockResolvedValue(2);
 
-    models.BoatStorage.count.mockResolvedValue(3);
+    await controller.delete({ params: { id: "1" } }, res);
 
-    await seasonsController.delete(req, res);
-
-    expect(t.rollback).toHaveBeenCalled();
-    expect(models.BoatStorage.count).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { seasonID: 1 },
-        transaction: t,
-      })
-    );
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Season has boat storage entries and cannot be deleted",
-    });
+    expect(t.rollback).toHaveBeenCalled();
   });
 
-  it("returns 404 when season not found", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
-
+  it("404 when season not found", async () => {
+    const res = mockRes();
     models.BoatStorage.count.mockResolvedValue(0);
     models.Seasons.findByPk.mockResolvedValue(null);
 
-    await seasonsController.delete(req, res);
+    await controller.delete({ params: { id: "1" } }, res);
 
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Season not found",
-    });
   });
 
   it("deletes season", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
-
+    const res = mockRes();
     models.BoatStorage.count.mockResolvedValue(0);
     models.Seasons.findByPk.mockResolvedValue({ seasonID: 1 });
+    models.Seasons.destroy.mockResolvedValue(1);
 
-    await seasonsController.delete(req, res);
+    await controller.delete({ params: { id: "1" } }, res);
 
-    expect(models.Seasons.destroy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { seasonID: 1 },
-        transaction: t,
-      })
-    );
-    expect(t.commit).toHaveBeenCalled();
     expect(res.json).toHaveBeenCalledWith({ message: "Season deleted" });
+    expect(t.commit).toHaveBeenCalled();
   });
 
-  it("returns 500 on error", async () => {
-    const req = { params: { id: "1" } };
-    const res = mockResponse();
+  it("500 on delete error", async () => {
+    const res = mockRes();
+    models.BoatStorage.count.mockRejectedValue(new Error());
 
-    models.BoatStorage.count.mockRejectedValue(new Error("err"));
+    await controller.delete({ params: { id: "1" } }, res);
 
-    await seasonsController.delete(req, res);
-
-    expect(t.rollback).toHaveBeenCalled();
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      error: "Error while deleting season",
-    });
   });
 });

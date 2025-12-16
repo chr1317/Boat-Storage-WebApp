@@ -238,7 +238,7 @@ async function loadProblems() {
 
 onMounted(async () => {
   await loadProblems();
-  boats.value = await getBoats(); // zawiera Boat + User
+  boats.value = await getBoats();
 });
 
 function showProblem(e) {

@@ -1,4 +1,3 @@
-// src/services/auth.js
 import { apiFetch } from "./apiClient";
 
 export async function login(email, password) {
@@ -18,7 +17,6 @@ export async function getMe() {
   try {
     return await apiFetch("/auth/me");
   } catch (err) {
-    // jeśli np. brak sesji, zwróć null zamiast błędu
     if (err.message.includes("401")) return null;
     throw err;
   }

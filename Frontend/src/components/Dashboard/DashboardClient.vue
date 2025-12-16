@@ -4,12 +4,10 @@
       {{ t("clientBoats.title") }}
     </h2>
 
-    <!-- loading -->
     <div v-if="loading" class="text-gray-500 text-sm">
       <i class="pi pi-spin pi-spinner mr-2" /> Loading...
     </div>
 
-    <!-- 1 łódź – większa karta -->
     <div v-else-if="boats.length === 1">
       <div
         class="rounded-lg border p-4 shadow-sm cursor-pointer hover:shadow-md transition max-w-md"
@@ -35,7 +33,6 @@
       </div>
     </div>
 
-    <!-- wiele łodzi -->
     <div
       v-else-if="boats.length > 1"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
@@ -60,7 +57,6 @@
       </div>
     </div>
 
-    <!-- brak łodzi -->
     <p
       v-else
       class="text-gray-500 text-sm mt-4"
@@ -77,7 +73,6 @@ import { useI18n } from "vue-i18n";
 import { useToast } from "primevue/usetoast";
 
 import { getBoats } from "../../services/boatService";
-import Tag from "primevue/tag";
 
 const boats = ref([]);
 const loading = ref(false);
@@ -107,7 +102,6 @@ function goToBoat(id) {
 }
 
 function statusLabel(boat) {
-  // out != null → ma zaplanowane wyjście
   if (boat.out) return t("clientBoats.status_reserved");
   return t("clientBoats.status_in_hall");
 }

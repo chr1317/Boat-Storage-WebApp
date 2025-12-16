@@ -63,6 +63,7 @@
   dismissableMask
   :header="t('app.settings')"
   :style="{ width: '80vw', maxWidth: '400px' }"
+  class="custom-dialog"
 >
   <div class="flex flex-col gap-4">
     <div class="flex justify-between items-center">
@@ -115,3 +116,13 @@ onMounted(() => {
   document.documentElement.classList.toggle("my-app-dark", isDark.value);
 });
 </script>
+
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

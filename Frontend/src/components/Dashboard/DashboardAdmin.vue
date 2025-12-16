@@ -1,108 +1,100 @@
 <template>
-  <div class="p-4 space-y-6">
+  <div class="p-4 space-y-8">
 
-    <!-- HEADER -->
-    <h2 class="text-2xl font-semibold">{{ t("problems.title") }}</h2>
+    <!-- PROBLEMS SUMMARY -->
+    <section>
+      <h3 class="text-sm font-semibold text-gray-500 mb-2 uppercase">
+        {{ t("problems.overview") }}
+      </h3>
 
-    <!-- SUMMARY CARDS -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-      <!-- CARD -->
-      <Card class="shadow-md">
-        <template #title>{{ t("problems.new") }}</template>
-        <template #subtitle>{{ newCount }} {{ t("problems.items") }}</template>
-        <template #content>
-          <Tag value="New" severity="warning" />
-        </template>
-      </Card>
-
-      <Card class="shadow-md">
-        <template #title>{{ t("problems.inProgress") }}</template>
-        <template #subtitle>{{ inProgressCount }} {{ t("problems.items") }}</template>
-        <template #content>
-          <Tag value="InProgress" severity="info" />
-        </template>
-      </Card>
-
-      <Card class="shadow-md">
-        <template #title>{{ t("problems.resolved") }}</template>
-        <template #subtitle>{{ resolvedCount }} {{ t("problems.items") }}</template>
-        <template #content>
-          <Tag value="Resolved" severity="success" />
-        </template>
-      </Card>
-
-    </div>
-
-    <!-- RECENT PROBLEMS -->
-    <div>
-      <h3 class="text-lg font-semibold mb-2">{{ t("problems.recent") }}</h3>
-
-      <div v-if="recentProblems.length" class="space-y-2">
-
-        <Card
-          v-for="p in recentProblems"
-          :key="p.PID"
-          class="p-3 border cursor-pointer hover:shadow"
-          @click="goToBoat(p.BID)"
-        >
-          <template #title>
-            {{ p.Description }}
-          </template>
-
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card class="shadow-sm">
+          <template #title>{{ t("problems.new") }}</template>
           <template #subtitle>
-            {{ p.Boat?.name }} — #{{ p.PID }}
+            {{ newCount }} {{ t("problems.items") }}
           </template>
-
           <template #content>
-            <Tag :value="p.Status" :severity="getStatusColor(p.Status)" />
+            <Tag :value="t('problems.new')" severity="warning" />
           </template>
         </Card>
 
+        <Card class="shadow-sm">
+          <template #title>{{ t("problems.inProgress") }}</template>
+          <template #subtitle>
+            {{ inProgressCount }} {{ t("problems.items") }}
+          </template>
+          <template #content>
+            <Tag :value="t('problems.inProgress')" severity="info" />
+          </template>
+        </Card>
+
+        <Card class="shadow-sm">
+          <template #title>{{ t("problems.resolved") }}</template>
+          <template #subtitle>
+            {{ resolvedCount }} {{ t("problems.items") }}
+          </template>
+          <template #content>
+            <Tag :value="t('problems.resolved')" severity="success" />
+          </template>
+        </Card>
+      </div>
+    </section>
+
+    <!-- OUT REQUESTS -->
+    <section>
+      <h3 class="text-sm font-semibold text-gray-500 mb-2 uppercase">
+        {{ t("outRequest.section_title") }}
+      </h3>
+
+      <Card
+        class="shadow-sm cursor-pointer hover:shadow-md transition"
+        @click="goToPendingOutRequests"
+      >
+        <template #title>{{ t("outRequest.admin_title") }}</template>
+        <template #subtitle>
+          {{ pendingOutCount }} {{ t("outRequest.pending_approval") }}
+        </template>
+        <template #content>
+          <Tag :value="t('outRequest.pending')" severity="warning" />
+        </template>
+      </Card>
+    </section>
+
+    <!-- RECENT ACTIVE PROBLEMS -->
+    <section>
+      <h3 class="text-sm font-semibold text-gray-500 mb-2 uppercase">
+        {{ t("problems.recent") }}
+      </h3>
+
+      <div v-if="recentProblems.length" class="space-y-2">
+        <div
+          v-for="p in recentProblems"
+          :key="p.PID"
+          class="flex items-center justify-between px-4 py-3
+                 bg-white rounded-md shadow-sm
+                 hover:shadow cursor-pointer transition"
+          @click="goToStorage(p.AID)"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium truncate">
+              {{ p.Description }}
+            </p>
+            <p class="text-xs text-gray-500">
+              {{ p.Boat?.name }} · #{{ p.PID }}
+            </p>
+          </div>
+
+          <Tag
+            :value="t(`problems.status_${p.Status}`)"
+            :severity="getStatusColor(p.Status)"
+          />
+        </div>
       </div>
 
-      <p v-else class="text-gray-500 text-sm">
+      <p v-else class="text-sm text-gray-500">
         {{ t("problems.empty") }}
       </p>
-    </div>
-
-    <!-- FULL TABLE -->
-    <div class="mt-6">
-      <h3 class="text-lg font-semibold mb-2">{{ t("problems.all") }}</h3>
-
-      <DataTable
-        :value="problems"
-        :loading="loading"
-        dataKey="PID"
-        class="p-datatable-sm"
-        :paginator="true"
-        :rows="10"
-        @row-click="goToBoatFromRow"
-      >
-        <Column field="PID" :header="t('problems.id')" style="width: 80px" />
-
-        <Column field="Boat.name" :header="t('problems.boat')">
-          <template #body="{ data }">
-            {{ data.Boat?.name || "—" }}
-          </template>
-        </Column>
-
-        <Column field="Description" :header="t('problems.description')" />
-
-        <Column field="Type" :header="t('problems.type')" style="width: 140px">
-          <template #body="{ data }">
-            <Tag :value="data.Type" />
-          </template>
-        </Column>
-
-        <Column field="Status" :header="t('problems.status')" style="width: 140px">
-          <template #body="{ data }">
-            <Tag :value="data.Status" :severity="getStatusColor(data.Status)" />
-          </template>
-        </Column>
-
-      </DataTable>
-    </div>
+    </section>
 
   </div>
 </template>
@@ -111,48 +103,58 @@
 import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from "vue-i18n"
+
 import { getProblems } from "../../services/problemService"
+import { getAllOutRequests } from "../../services/outRequestService"
+
+const router = useRouter()
+const { t } = useI18n({ useScope: "global" })
 
 const problems = ref([])
 const loading = ref(false)
-const router = useRouter()
-const { t } = useI18n({ useScope: "global" })
+const pendingOutCount = ref(0)
 
 onMounted(async () => {
   loading.value = true
   try {
     problems.value = await getProblems()
+    const out = await getAllOutRequests()
+    pendingOutCount.value = out.filter(r => r.Status === "Pending").length
   } finally {
     loading.value = false
   }
 })
 
-// SUMMARY COUNTS
-const newCount = computed(() => problems.value.filter(p => p.Status === "New").length)
-const inProgressCount = computed(() => problems.value.filter(p => p.Status === "InProgress").length)
-const resolvedCount = computed(() => problems.value.filter(p => p.Status === "Resolved").length)
-
-// RECENT PROBLEMS (3 latest)
-const recentProblems = computed(() =>
-  [...problems.value]
-    .sort((a, b) => b.PID - a.PID)
-    .slice(0, 3)
+const newCount = computed(() =>
+  problems.value.filter(p => p.Status === "New").length
+)
+const inProgressCount = computed(() =>
+  problems.value.filter(p => p.Status === "InProgress").length
+)
+const resolvedCount = computed(() =>
+  problems.value.filter(p => p.Status === "Resolved").length
 )
 
-function goToBoat(id) {
-  router.push(`/home/boats/${id}`)
+const recentProblems = computed(() =>
+  problems.value
+    .filter(p => p.Status !== "Resolved")
+    .sort((a, b) => b.PID - a.PID)
+    .slice(0, 5)
+)
+
+function goToStorage(aid) {
+  if (aid) router.push(`/home/storage/${aid}`)
 }
 
-function goToBoatFromRow(event) {
-  goToBoat(event.data.BID)
+function goToPendingOutRequests() {
+  router.push("/home/out-requests?status=Pending")
 }
 
 function getStatusColor(status) {
-  switch (status) {
-    case "Resolved": return "success"
-    case "InProgress": return "info"
-    case "New": return "warning"
-    default: return null
-  }
+  return {
+    New: "warning",
+    InProgress: "info",
+    Resolved: "success"
+  }[status] || null
 }
 </script>

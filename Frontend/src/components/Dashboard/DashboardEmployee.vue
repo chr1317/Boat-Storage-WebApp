@@ -21,10 +21,15 @@
 
       <!-- To Do -->
       <div>
-        <h3 class="text-lg font-semibold mb-3">
-          {{ t("employee.todo") }}
-          <Tag severity="warning" class="ml-2">{{ todoWorks.length }}</Tag>
-        </h3>
+        <div class="flex flex-col items-center mb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-semibold">
+              {{ t("employee.todo") }}
+            </h3>
+            <Tag severity="warning">{{ todoWorks.length }}</Tag>
+          </div>
+        </div>
+
 
         <div class="flex flex-col gap-3">
           <WorkCard
@@ -38,10 +43,15 @@
 
       <!-- In Progress -->
       <div>
-        <h3 class="text-lg font-semibold mb-3">
-          {{ t("employee.inprogress") }}
-          <Tag severity="info" class="ml-2">{{ progressWorks.length }}</Tag>
-        </h3>
+        <div class="flex flex-col items-center mb-3">
+        <div class="flex items-center gap-2">
+          <h3 class="text-lg font-semibold">
+            {{ t("employee.inprogress") }}
+          </h3>
+          <Tag severity="info">{{ progressWorks.length }}</Tag>
+        </div>
+      </div>
+
 
         <div class="flex flex-col gap-3">
           <WorkCard
@@ -55,10 +65,15 @@
 
       <!-- Done -->
       <div>
-        <h3 class="text-lg font-semibold mb-3">
-          {{ t("employee.done") }}
-          <Tag severity="success" class="ml-2">{{ doneWorks.length }}</Tag>
-        </h3>
+        <div class="flex flex-col items-center mb-3">
+          <div class="flex items-center gap-2">
+            <h3 class="text-lg font-semibold">
+              {{ t("employee.done") }}
+            </h3>
+            <Tag severity="success">{{ doneWorks.length }}</Tag>
+          </div>
+        </div>
+
 
         <div class="flex flex-col gap-3 opacity-70">
           <WorkCard
@@ -78,6 +93,7 @@
       modal
       :header="t('employee.details')"
       :style="{ width: '500px' }"
+      class="custom-dialog"
     >
       <div v-if="selected">
         <p><strong>{{ t("employee.id") }}:</strong> {{ selected.WID }}</p>
@@ -104,8 +120,8 @@
         <div class="mt-4 flex justify-end">
           <Button
             icon="pi pi-arrow-right"
-            :label="t('employee.open_boat')"
-            @click="goToBoat(selected.BID)"
+            :label="t('employee.open_storage')"
+            @click="goToStorage(selected.AID)"
           />
         </div>
       </div>
@@ -157,9 +173,11 @@ const doneWorks = computed(() =>
   works.value.filter(w => w.State === "Done")
 );
 
-function goToBoat(id) {
-  router.push(`/home/boats/${id}`);
+function goToStorage(aid) {
+  if (!aid) return;
+  router.push(`/home/storage/${aid}`);
 }
+
 
 function openDetails(work) {
   selected.value = work;
@@ -175,3 +193,13 @@ function stateColor(state) {
   }
 }
 </script>
+
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

@@ -42,6 +42,7 @@
     modal
     :header="t('users.details')"
     :style="{ width: '90vw', maxWidth: '500px' }"
+    class="custom-dialog"
   >
     <div v-if="selectedUser" class="flex flex-col gap-3">
       <div class="flex justify-between"><span>ID</span><span>{{ selectedUser.UID }}</span></div>
@@ -65,14 +66,12 @@
     </div>
   </Dialog>
 
-  <!-- Add/Edit user -->
-<!-- Add/Edit user -->
-<!-- Add/Edit user -->
 <Dialog
   v-model:visible="UserFormDialogVisible"
   modal
   :header="isEditing ? t('common.edit') : t('common.add')"
   :style="{ width: '90vw', maxWidth: '500px' }"
+  class="custom-dialog"
 >
   <!-- legenda wymaganych pól -->
   <p class="text-xs text-gray-500 mb-3">
@@ -325,5 +324,13 @@ async function resetPassword() {
     border-radius: 0 !important;
     height: 100vh !important;
   }
+}
+
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+  padding: 1.2rem 1.5rem !important;
 }
 </style>

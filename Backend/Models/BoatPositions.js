@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       unique: true
     },
+    AID: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
     PosX: {
       type: DataTypes.DECIMAL(6, 2),
       allowNull: false

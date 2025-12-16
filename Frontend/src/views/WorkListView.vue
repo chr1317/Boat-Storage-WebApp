@@ -142,6 +142,7 @@
     <WorkDetailsDialog
       v-model:visible="detailsDialogVisible"
       :work="selectedWork"
+      class="custom-dialog"
       @refresh="fetchWorks"
     />
 
@@ -252,3 +253,13 @@ function openAddDialog() {
   addDialogVisible.value = true;
 }
 </script>
+
+<style scoped>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

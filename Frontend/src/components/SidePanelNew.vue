@@ -29,6 +29,16 @@
             <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.Dashboard') }}</span>
           </RouterLink>
+          <RouterLink
+            v-if="['Admin', 'Employee'].includes(auth.role)"
+            to="/home/storage"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/storage') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Storage') }}</span>
+          </RouterLink>
           <!-- Boats -->
           <RouterLink
             v-if="['Admin', 'Employee'].includes(auth.role)"
@@ -100,6 +110,16 @@
           >
             <i class="pi pi-ship text-lg"></i>
             <span class="font-medium">{{ t('routes.boatHalls') }}</span>
+          </RouterLink>
+          <RouterLink
+            v-if="['Admin'].includes(auth.role)"
+            to="/home/seasons"
+            @click="$emit('close')"
+            class="nav-link flex w-full items-center justify-center gap-3 p-3 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 cursor-pointer transition-colors duration-150"
+            :class="{ active: route.path.startsWith('/seasons') }"
+          >
+            <i class="pi pi-ship text-lg"></i>
+            <span class="font-medium">{{ t('routes.Seasons') }}</span>
           </RouterLink>
           
       

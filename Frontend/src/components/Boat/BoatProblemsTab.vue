@@ -2,10 +2,12 @@
   <div class="p-4">
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-      <h3 class="text-lg font-semibold">Problems</h3>
+      <h3 class="text-lg font-semibold">
+        {{ $t("problems.title") }}
+      </h3>
 
       <Button
-        label="Add problem"
+        :label="$t('problems.add')"
         icon="pi pi-plus"
         :size="isMobile ? 'small' : null"
         :class="isMobile ? 'w-full justify-center text-sm py-2' : 'px-4 py-2'"
@@ -17,7 +19,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
       <InputText
         v-model="filters.description"
-        placeholder="Search description"
+        :placeholder="$t('problems.description')"
         class="w-full text-sm"
       />
       <Dropdown
@@ -25,7 +27,7 @@
         :options="typeOptionsWithAll"
         optionLabel="label"
         optionValue="value"
-        placeholder="All types"
+        :placeholder="$t('common.filters')"
         class="w-full text-sm"
       />
       <Dropdown
@@ -33,7 +35,7 @@
         :options="statusOptionsWithAll"
         optionLabel="label"
         optionValue="value"
-        placeholder="All status"
+        :placeholder="$t('common.status')"
         class="w-full text-sm"
       />
     </div>
@@ -47,7 +49,9 @@
       >
         <div class="flex justify-between items-start">
           <div>
-            <p class="font-semibold text-sm">#{{ p.PID }} — {{ p.Type }}</p>
+            <p class="font-semibold text-sm">
+              #{{ p.PID }} — {{ p.Type }}
+            </p>
             <p class="text-xs text-gray-500 break-words">
               {{ p.Description }}
             </p>
@@ -58,14 +62,14 @@
 
         <div class="mt-3 flex gap-2 flex-wrap text-xs">
           <Button
-            label="Details"
+            :label="$t('common.open')"
             size="small"
             @click="openDetailsDialog(p)"
           />
 
           <Button
             v-if="isStaff"
-            label="Create work"
+            :label="$t('works.add')"
             size="small"
             severity="info"
             :disabled="p.Type === 'Issue' && !p.ApprovedByClient"
@@ -74,7 +78,7 @@
 
           <Button
             v-if="!isStaff && p.Type === 'Issue'"
-            label="Approve"
+            :label="$t('problems.approveButton')"
             size="small"
             severity="success"
             :disabled="p.ApprovedByClient"
@@ -83,7 +87,6 @@
         </div>
       </div>
 
-      <!-- PAGINATION -->
       <Paginator
         :rows="pageSize"
         :totalRecords="filteredProblems.length"
@@ -98,36 +101,40 @@
       class="text-sm"
       :paginator="false"
     >
-      <Column field="PID" header="ID" style="width:60px" />
-      <Column field="Description" header="Description" />
-      <Column field="Type" header="Type" style="width:120px" />
-      <Column field="Status" header="Status" style="width:120px">
+      <Column field="PID" :header="$t('problems.id')" style="width:60px" />
+      <Column field="Description" :header="$t('problems.description')" />
+      <Column field="Type" :header="$t('problems.type')" style="width:120px" />
+      <Column field="Status" :header="$t('problems.status')" style="width:120px">
         <template #body="{ data }">
           <Tag :value="data.Status" :severity="getStatusColor(data.Status)" />
         </template>
       </Column>
 
-      <Column header="Approved" style="width:120px">
+      <Column
+        :header="$t('problems.approved')"
+        style="width:140px"
+      >
         <template #body="{ data }">
           <span v-if="data.Type === 'Issue'">
-            {{ data.ApprovedByClient ? "Yes" : "No" }}
+            {{ data.ApprovedByClient ? $t('common.yes') : $t('common.no') }}
           </span>
-          <span v-else>-</span>
+          <span v-else>—</span>
         </template>
       </Column>
 
-      <Column header="Actions" style="width:260px">
+
+      <Column :header="$t('common.actions')" style="width:260px">
         <template #body="{ data }">
           <div class="flex gap-2 flex-wrap">
             <Button
-              label="Details"
+              :label="$t('common.open')"
               size="small"
               @click="openDetailsDialog(data)"
             />
 
             <Button
               v-if="isStaff"
-              label="Create work"
+              :label="$t('works.add')"
               size="small"
               severity="info"
               :disabled="data.Type === 'Issue' && !data.ApprovedByClient"
@@ -136,7 +143,7 @@
 
             <Button
               v-if="!isStaff && data.Type === 'Issue'"
-              label="Approve"
+              :label="$t('problems.approveButton')"
               size="small"
               severity="success"
               :disabled="data.ApprovedByClient"
@@ -147,166 +154,187 @@
       </Column>
     </DataTable>
 
-    <!-- PAGINATION DESKTOP -->
-    <div v-if="!isMobile" class="mt-3 flex justify-end">
-      <Paginator
-        :rows="pageSize"
-        :totalRecords="filteredProblems.length"
-        v-model:first="first"
-      />
-    </div>
-
     <!-- EMPTY -->
     <p v-if="!problems.length" class="text-gray-500 text-sm mt-4">
-      No problems yet.
+      {{ $t("problems.empty") }}
     </p>
-
-    <!-- DIALOGI -->
 
     <!-- ADD PROBLEM -->
     <Dialog
       v-model:visible="showAddDialog"
-      header="Report problem"
+      :header="$t('problems.add')"
       modal
       class="custom-dialog"
       :style="{ width: isMobile ? '95vw' : '500px' }"
     >
       <div class="flex flex-col gap-3">
-        <div>
-          <label>Description *</label>
-          <Textarea v-model="form.Description" autoResize rows="3" class="w-full" />
-        </div>
 
-        <div v-if="isStaff">
-          <label>Type</label>
-          <Dropdown
-            v-model="form.Type"
-            :options="typeOptions"
-            optionLabel="label"
-            optionValue="value"
-            class="w-full"
-          />
-        </div>
+  <!-- DESCRIPTION -->
+  <div>
+    <label class="font-semibold">
+      {{ $t("problems.description") }} *
+    </label>
+    <Textarea
+      v-model="form.Description"
+      autoResize
+      rows="3"
+      class="w-full"
+    />
+  </div>
 
-        <div class="flex justify-end gap-2 mt-4">
-          <Button label="Cancel" outlined @click="showAddDialog = false" />
-          <Button label="Save" @click="submitProblem" />
-        </div>
-      </div>
+  <!-- TYPE (ONLY STAFF) -->
+  <div v-if="isStaff">
+    <label class="font-semibold">
+      {{ $t("problems.type") }}
+    </label>
+
+    <Dropdown
+      v-model="form.Type"
+      :options="typeOptions"
+      optionLabel="label"
+      optionValue="value"
+      class="w-full"
+    />
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="flex justify-end gap-2 mt-4">
+    <Button
+      :label="$t('common.cancel')"
+      outlined
+      @click="showAddDialog = false"
+    />
+    <Button
+      :label="$t('common.save')"
+      @click="submitProblem"
+    />
+  </div>
+
+</div>
+
     </Dialog>
 
     <!-- DETAILS -->
     <Dialog
       v-model:visible="showDetailsDialog"
-      header="Problem details"
+      :header="$t('problems.details')"
       modal
       class="custom-dialog"
       :style="{ width: isMobile ? '90vw' : '500px' }"
     >
-      <p><strong>ID:</strong> {{ selectedProblem.PID }}</p>
-      <p><strong>Description:</strong> {{ selectedProblem.Description }}</p>
-      <p><strong>Type:</strong> {{ selectedProblem.Type }}</p>
-      <p><strong>Status:</strong> {{ selectedProblem.Status }}</p>
-
-      <p class="mt-2">
-        <strong>Approved by client:</strong>
-        <span v-if="selectedProblem.Type === 'Issue'">
-          {{ selectedProblem.ApprovedByClient ? "Yes" : "No" }}
-        </span>
-        <span v-else>-</span>
-      </p>
+      <p><strong>{{ $t("problems.id") }}:</strong> {{ selectedProblem.PID }}</p>
+      <p><strong>{{ $t("problems.description") }}:</strong> {{ selectedProblem.Description }}</p>
+      <p><strong>{{ $t("problems.type") }}:</strong> {{ selectedProblem.Type }}</p>
+      <p><strong>{{ $t("problems.status") }}:</strong> {{ selectedProblem.Status }}</p>
 
       <div class="flex justify-end mt-4">
-        <Button label="Close" @click="showDetailsDialog = false" />
+        <Button :label="$t('common.cancel')" @click="showDetailsDialog = false" />
       </div>
     </Dialog>
 
     <!-- CREATE WORK -->
-    <Dialog
-      v-model:visible="showCreateWorkDialog"
-      header="Create work"
-      modal
-      class="custom-dialog"
-      :style="{ width: isMobile ? '95vw' : '480px' }"
-    >
-      <div class="flex flex-col gap-3">
-        <div>
-          <label class="font-semibold">Problem</label>
-          <p class="p-2 bg-gray-100 rounded">
-            {{ selectedProblemForWork?.Description }}
-          </p>
-        </div>
-
-        <Dropdown
-          v-model="workForm.SID"
-          :options="services"
-          optionLabel="Name"
-          optionValue="SID"
-          placeholder="Select service"
-          class="w-full"
-          filter
-        />
-
-        <InputText v-model="workForm.Comment" placeholder="Comment" class="w-full" />
-
-        <InputNumber v-model="workForm.HR" placeholder="Hours" class="w-full" />
-
-        <Dropdown
-          v-model="workForm.UID"
-          :options="workers"
-          optionLabel="Name"
-          optionValue="UID"
-          placeholder="Select worker"
-          class="w-full"
-          filter
-        />
-
-        <div class="flex justify-end gap-2 mt-3">
-          <Button label="Cancel" outlined @click="showCreateWorkDialog = false" />
-          <Button label="Create" @click="submitWorkFromProblem" />
-        </div>
-      </div>
-    </Dialog>
-
-
 <Dialog
-  v-model:visible="showApproveDialog"
-  header="{{$t('problems.approveTitle')}}"
+  v-model:visible="showCreateWorkDialog"
+  :header="$t('works.add')"
   modal
   class="custom-dialog"
-  :style="{ width: isMobile ? '90vw' : '400px' }"
+  :style="{ width: isMobile ? '95vw' : '480px' }"
 >
-  <p>
-    {{$t('problems.approveConfirm')}}:
-    <strong>#{{ problemToApprove?.PID }}</strong> — 
-    {{ problemToApprove?.Description }}
-  </p>
+  <div class="flex flex-col gap-3">
 
-  <div class="flex justify-end gap-2 mt-4">
-    <Button
-      label="{{$t('common.cancel')}}"
-      outlined
-      @click="showApproveDialog = false"
+    <div>
+      <label class="font-semibold">
+        {{ $t("problems.description") }}
+      </label>
+      <p class="p-2 bg-gray-100 rounded text-sm">
+        {{ selectedProblemForWork?.Description }}
+      </p>
+    </div>
+
+    <Dropdown
+      v-model="workForm.SID"
+      :options="services"
+      optionLabel="Name"
+      optionValue="SID"
+      :placeholder="$t('works.select_service')"
+      class="w-full"
+      filter
     />
-    <Button
-      label="{{$t('problems.approveButton')}}"
-      severity="success"
-      @click="confirmApprove"
+
+    <InputText
+      v-model="workForm.Comment"
+      :placeholder="$t('works.comment')"
+      class="w-full"
     />
+
+    <InputNumber
+      v-model="workForm.HR"
+      :placeholder="$t('works.hours')"
+      class="w-full"
+    />
+
+    <Dropdown
+      v-model="workForm.UID"
+      :options="workers"
+      optionLabel="Name"
+      optionValue="UID"
+      :placeholder="$t('boat.select_worker')"
+      class="w-full"
+      filter
+    />
+
+    <div class="flex justify-end gap-2 mt-3">
+      <Button
+        :label="$t('common.cancel')"
+        outlined
+        @click="showCreateWorkDialog = false"
+      />
+      <Button
+        :label="$t('common.create')"
+        @click="submitWorkFromProblem"
+      />
+    </div>
+
   </div>
 </Dialog>
 
+
+    <!-- APPROVE -->
+    <Dialog
+      v-model:visible="showApproveDialog"
+      :header="$t('problems.approveTitle')"
+      modal
+      class="custom-dialog"
+      :style="{ width: isMobile ? '90vw' : '400px' }"
+    >
+      <p>
+        {{ $t("problems.approveConfirm") }}
+        <strong>#{{ problemToApprove?.PID }}</strong>
+      </p>
+
+      <div class="flex justify-end gap-2 mt-4">
+        <Button
+          :label="$t('common.cancel')"
+          outlined
+          @click="showApproveDialog = false"
+        />
+        <Button
+          :label="$t('problems.approveButton')"
+          severity="success"
+          @click="confirmApprove"
+        />
+      </div>
+    </Dialog>
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { useAuthStore } from "../../stores/auth";
 
 import {
-  getProblems,
   createProblem,
   createWorkFromProblem,
   approveProblem as apiApproveProblem,
@@ -315,28 +343,23 @@ import {
 import { getServices } from "../../services/serviceService";
 import { getUsers } from "../../services/userService";
 
-import Tag from "primevue/tag";
-import Dropdown from "primevue/dropdown";
-import InputText from "primevue/inputtext";
-import Textarea from "primevue/textarea";
-import Dialog from "primevue/dialog";
-import Button from "primevue/button";
-import Paginator from "primevue/paginator";
-import InputNumber from "primevue/inputnumber";
+// ✅ MUSI być przypisane do zmiennej
+const props = defineProps({
+  problems: { type: Array, required: true },
+  AID: { type: Number, required: false },
+  BID: { type: Number, required: false },
+});
 
-const route = useRoute();
+const emit = defineEmits(["refresh"]);
+
 const toast = useToast();
 const auth = useAuthStore();
 
-const problems = ref([]);
+const isStaff = computed(() => ["Admin", "Employee"].includes(auth.role));
+const isMobile = computed(() => window.innerWidth < 768);
+
 const services = ref([]);
 const workers = ref([]);
-const showApproveDialog = ref(false);
-const problemToApprove = ref(null);
-
-const isStaff = computed(() => ["Admin", "Employee"].includes(auth.role));
-// proste, nie-reaktywne, ale wystarczające do różnicowania widoku
-const isMobile = computed(() => window.innerWidth < 768);
 
 const filters = ref({
   description: "",
@@ -364,9 +387,11 @@ const statusOptionsWithAll = [
 const showAddDialog = ref(false);
 const showDetailsDialog = ref(false);
 const showCreateWorkDialog = ref(false);
+const showApproveDialog = ref(false);
 
 const selectedProblem = ref({});
 const selectedProblemForWork = ref(null);
+const problemToApprove = ref(null);
 
 const form = ref({
   Description: "",
@@ -380,36 +405,9 @@ const workForm = ref({
   UID: null,
 });
 
-/* LOAD */
-async function load() {
-  const all = await getProblems();
-  problems.value = all.filter((p) => p.BID === Number(route.params.id));
-}
-
-async function confirmApprove() {
-  if (!problemToApprove.value) return;
-
-  await approve(problemToApprove.value);
-  showApproveDialog.value = false;
-}
-
-
-function openApproveDialog(problem) {
-  problemToApprove.value = problem;
-  showApproveDialog.value = true;
-}
-
-onMounted(async () => {
-  await load();
-  services.value = await getServices();
-
-  const all = await getUsers();
-  workers.value = all.filter((u) => ["Admin", "Employee"].includes(u.Role));
-});
-
 /* FILTERING */
 const filteredProblems = computed(() => {
-  return problems.value.filter((p) => {
+  return props.problems.filter((p) => {
     return (
       (!filters.value.description ||
         p.Description.toLowerCase().includes(filters.value.description.toLowerCase())) &&
@@ -422,10 +420,17 @@ const filteredProblems = computed(() => {
 /* PAGINATION */
 const first = ref(0);
 const pageSize = 5;
-
 const pagedItems = computed(() =>
   filteredProblems.value.slice(first.value, first.value + pageSize)
 );
+
+/* LOAD SERVICES + WORKERS */
+onMounted(async () => {
+  services.value = await getServices();
+
+  const all = await getUsers();
+  workers.value = all.filter((u) => ["Admin", "Employee"].includes(u.Role));
+});
 
 /* ACTIONS */
 function openDetailsDialog(p) {
@@ -439,24 +444,28 @@ function openCreateWorkDialog(p) {
   showCreateWorkDialog.value = true;
 }
 
-async function approve(problem) {
-  await apiApproveProblem(problem.PID);
+function openApproveDialog(p) {
+  problemToApprove.value = p;
+  showApproveDialog.value = true;
+}
+
+async function confirmApprove() {
+  if (!problemToApprove.value) return;
+  await apiApproveProblem(problemToApprove.value.PID);
   toast.add({ severity: "success", summary: "Approved", life: 1500 });
-  await load();
+  showApproveDialog.value = false;
+  emit("refresh");
 }
 
 async function submitProblem() {
   if (!form.value.Description.trim()) {
-    toast.add({
-      severity: "error",
-      summary: "Description required",
-      life: 1500,
-    });
+    toast.add({ severity: "error", summary: "Description required", life: 1500 });
     return;
   }
 
   await createProblem({
-    BID: Number(route.params.id),
+    BID: props.BID,
+    AID: props.AID,
     Description: form.value.Description,
     Type: isStaff.value ? form.value.Type : "ClientRequest",
   });
@@ -464,7 +473,7 @@ async function submitProblem() {
   toast.add({ severity: "success", summary: "Problem added", life: 1500 });
   form.value.Description = "";
   showAddDialog.value = false;
-  await load();
+  emit("refresh");
 }
 
 async function submitWorkFromProblem() {
@@ -477,7 +486,7 @@ async function submitWorkFromProblem() {
 
   toast.add({ severity: "success", summary: "Work created", life: 1500 });
   showCreateWorkDialog.value = false;
-  await load();
+  emit("refresh");
 }
 
 function getStatusColor(s) {
@@ -490,6 +499,8 @@ function getStatusColor(s) {
   );
 }
 </script>
+
+
 
 <style>
 .custom-dialog .p-dialog-content {

@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
+    AID: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     UID: {
       type: DataTypes.INTEGER,
       allowNull: true
@@ -26,10 +30,6 @@ module.exports = (sequelize, DataTypes) => {
     Date: {
       type: DataTypes.DATE,
       allowNull: true
-    },
-    seasonID: {
-      type: DataTypes.INTEGER,
-      allowNull: false
     },
     HR: {
       type: DataTypes.INTEGER,

@@ -10,8 +10,17 @@ onMounted(async () => {
   const qr = route.params.qr;
 
   try {
-    const boat = await getBoatByQR(qr);
-    router.replace(`/home/boats/${boat.BID}?tab=service`);
+        const res = await getBoatByQR(qr);
+
+    // 1️⃣ aktywne storage → storage view
+    if (res?.AID) {
+      router.replace(`/home/storage/${res.AID}`);
+      return;
+    }
+
+    // 2️⃣ fallback → łódka (jak wcześniej)
+    router.replace(`/home/boats/${res.BID}`);
+
   } catch (err) {
     console.error("QR redirect error:", err);
     const message = err.message || "";

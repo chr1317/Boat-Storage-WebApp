@@ -1,5 +1,6 @@
 <template>
   <div class="p-4">
+
     <!-- Header -->
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-xl font-semibold">{{ t("boat.works_title") }}</h2>
@@ -13,388 +14,401 @@
       />
     </div>
 
-    <!-- Table -->
+    <!-- TABLE -->
     <DataTable
+      v-if="works.length"
       :value="works"
       dataKey="WID"
-      :paginator="true"
       :rows="10"
+      paginator
       class="p-datatable-sm"
-      :loading="loading"
-      v-if="works.length > 0"
       v-model:expandedRows="expandedRows"
     >
-      <Column expander style="width: 3rem" />
-      <Column field="Service.Name" :header="t('boat.service')" sortable />
-      <Column field="Service.Part" :header="t('boat.part')" />
-      <Column field="User.Name" :header="t('boat.worker')">
+      <Column expander style="width:3rem" />
+      <Column field="Service.Name" :header="t('boat.service')" />
+
+      <Column :header="t('boat.worker')">
         <template #body="{ data }">
-          <span v-if="!data.parentWID">{{ data.User?.Name || '—' }}</span>
+          {{ data.User?.Name || "—" }}
         </template>
       </Column>
-      <Column field="Date" :header="t('boat.date')">
-        <template #body="{ data }">{{ formatDate(data.Date) }}</template>
-      </Column>
-      <Column field="HR" :header="t('boat.hours')">
+
+      <Column :header="t('boat.date')">
         <template #body="{ data }">
-          <span v-if="!data.parentWID">{{ data.HR || '—' }}</span>
+          {{ formatDate(data.Date) }}
         </template>
       </Column>
+
+      <Column :header="t('boat.hours')">
+        <template #body="{ data }">
+          {{ data.HR ?? "—" }}
+        </template>
+      </Column>
+
       <Column field="Comment" :header="t('boat.comment')" />
-      <Column field="State" :header="t('boat.status')">
+
+      <Column :header="t('boat.status')">
         <template #body="{ data }">
           <Tag :value="data.State" :severity="getStateColor(data.State)" />
         </template>
       </Column>
 
-      <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 8rem">
+      <!-- ACTIONS -->
+      <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width:9rem">
         <template #body="{ data }">
           <div class="flex gap-2 justify-center">
             <Button
-              icon="pi pi-pencil"
-              rounded
-              outlined
-              size="small"
-              severity="secondary"
-              v-tooltip.bottom="t('boat.edit')"
-              @click="openEditDialog(data)"
-            />
-            <Button
-              icon="pi pi-plus"
-              rounded
-              outlined
-              size="small"
-              severity="success"
-              v-tooltip.bottom="t('boat.add_subtask')"
               v-if="!data.parentWID"
-              @click="openAddSubtaskDialog(data)"
+              icon="pi pi-plus"
+              rounded outlined size="small"
+              severity="success"
+              @click="openSubtaskDialog(data)"
             />
             <Button
-              icon="pi pi-refresh"
-              rounded
-              outlined
-              size="small"
-              severity="info"
-              v-tooltip.bottom="t('boat.changeState')"
-              @click="openStateDialog(data)"
+              icon="pi pi-pencil"
+              rounded outlined size="small"
+              @click="openManageDialog(data)"
             />
             <Button
               icon="pi pi-trash"
-              rounded
-              outlined
-              size="small"
-              severity="danger"
-              v-tooltip.bottom="t('boat.delete')"
-              @click="handleDeleteWork(data.WID)"
+              rounded outlined size="small" severity="danger"
+              @click="confirmDelete(data)"
             />
           </div>
         </template>
       </Column>
 
-      <!-- ✅ Expansion slot (subtasks) -->
+      <!-- SUBTASKS -->
       <template #expansion="{ data }">
         <div v-if="data.subtasks?.length" class="p-3 bg-gray-50 rounded">
-          <h4 class="text-sm font-semibold mb-2">{{ t('boat.subTasks') }}</h4>
-
           <DataTable :value="data.subtasks" size="small">
             <Column field="Service.Name" :header="t('boat.service')" />
             <Column field="Comment" :header="t('boat.comment')" />
-            <Column field="Date" :header="t('boat.date')">
-              <template #body="{ data }">
-                {{ data.Date ? formatDate(data.Date) : '—' }}
-              </template>
-            </Column>
-            <Column field="State" :header="t('boat.status')">
+            <Column :header="t('boat.status')">
               <template #body="{ data }">
                 <Tag :value="data.State" :severity="getStateColor(data.State)" />
               </template>
             </Column>
-            <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width: 6rem">
+            <Column v-if="isAdminOrEmployee" :header="t('boat.actions')" style="width:6rem">
               <template #body="{ data }">
-                <div class="flex justify-center gap-2">
-                  <Button
-                    icon="pi pi-refresh"
-                    rounded
-                    text
-                    size="small"
-                    @click="openStateDialog(data)"
-                    v-tooltip.bottom="t('boat.changeState')"
-                  />
-                  <Button
-                    icon="pi pi-trash"
-                    rounded
-                    text
-                    size="small"
-                    severity="danger"
-                    @click="handleDeleteWork(data.WID)"
-                    v-tooltip.bottom="t('boat.delete')"
-                  />
-                </div>
+                <Button
+                  icon="pi pi-pencil"
+                  rounded outlined size="small"
+                  @click="openManageDialog(data)"
+                />
               </template>
             </Column>
           </DataTable>
         </div>
 
-        <div v-else class="text-center text-gray-400 italic py-2">
-          No subtasks
+        <div v-else class="text-center italic text-gray-400 py-2">
+          {{ t("works.no_subtasks") }}
         </div>
       </template>
     </DataTable>
 
-    <!-- Empty state -->
     <div v-else class="text-center text-gray-500 py-8">
       {{ t("boat.no_works") }}
     </div>
 
-    <!-- Dialog: change state -->
+    <!-- MANAGE WORK DIALOG -->
+<Dialog
+  v-model:visible="manageDialogVisible"
+  :header="t('works.changeState')"
+  modal
+  style="width:420px"
+  class="custom-dialog"
+>
+  <div class="flex flex-col gap-4">
+
+    <!-- COMMENT -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-semibold">
+        {{ t("works.comment") }}
+      </label>
+      <InputText
+        v-model="editComment"
+        :placeholder="t('works.comment')"
+        class="w-full"
+      />
+    </div>
+
+    <!-- STATE -->
+    <div class="flex flex-col gap-1">
+      <label class="text-sm font-semibold">
+        {{ t("works.state") }}
+      </label>
+      <Dropdown
+        v-model="editState"
+        :options="stateOptions"
+        optionLabel="label"
+        optionValue="value"
+        class="w-full"
+      />
+    </div>
+
+    <!-- WORKER -->
+    <div v-if="canChangeWorker" class="flex flex-col gap-1">
+      <label class="text-sm font-semibold">
+        {{ t("boat.worker") }}
+      </label>
+      <Dropdown
+        v-model="editUID"
+        :options="employees"
+        optionLabel="Name"
+        optionValue="UID"
+        :placeholder="t('boat.select_worker')"
+        filter
+        class="w-full"
+      />
+    </div>
+
+    <!-- HOURS -->
+    <div v-if="canChangeHours" class="flex flex-col gap-1">
+      <label class="text-sm font-semibold">
+        {{ t("boat.hours") }}
+      </label>
+      <InputNumber
+        v-model="editHR"
+        :placeholder="t('boat.hours')"
+        class="w-full"
+      />
+    </div>
+
+    <div class="flex justify-end gap-2">
+      <Button
+        :label="t('common.cancel')"
+        outlined
+        @click="manageDialogVisible=false"
+      />
+      <Button
+        :label="t('common.save')"
+        @click="saveWorkChanges"
+      />
+    </div>
+
+  </div>
+</Dialog>
+
+        <!-- ADD SUBTASK -->
     <Dialog
-      v-model:visible="stateDialogVisible"
+      v-model:visible="subtaskDialogVisible"
+      :header="t('works.add_subtask')"
       modal
-      header="Change work state"
-      :closable="false"
-      :style="{ width: '400px' }"
+      style="width:420px"
+      class="custom-dialog"
     >
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3">
+
         <Dropdown
-          v-model="selectedState"
-          :options="stateOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select state"
+          v-model="subtaskSID"
+          :options="services"
+          optionLabel="Name"
+          optionValue="SID"
+          :placeholder="t('works.select_service')"
+          filter
         />
+
+        <InputText
+          v-model="subtaskComment"
+          :placeholder="t('works.comment')"
+        />
+
         <div class="flex justify-end gap-2">
-          <Button label="Cancel" outlined @click="stateDialogVisible = false" />
-          <Button label="Save" @click="saveWorkState" />
-        </div>
-      </div>
-    </Dialog>
-
-    <!-- Add Work Dialog -->
-    <BoatAddWorkDialog
-      v-model:visible="addNewWorkDialogVisible"
-      :boat-id="Number(route.params.id)"
-      :season-id="works[0]?.seasonID || 1"
-      :user-id="auth.user.UID"
-      @created="fetchWorks"
-    />
-
-    <!-- Edit Work Dialog -->
-    <Dialog
-      v-model:visible="editWorkDialogVisible"
-      modal
-      header="Edit Work"
-      :style="{ width: '500px' }"
-    >
-      <div class="flex flex-col gap-3">
-        <div>
-          <label class="font-semibold block mb-1">Comment</label>
-          <InputText v-model="selectedWorkForEdit.Comment" class="w-full" />
-        </div>
-        <div>
-          <label class="font-semibold block mb-1">Hours</label>
-          <InputNumber v-model="selectedWorkForEdit.HR" class="w-full" />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button label="Cancel" outlined @click="editWorkDialogVisible = false" />
-        <Button label="Save" @click="saveEditedWork" />
-      </template>
-    </Dialog>
-
-    <!-- Add Subtask Dialog -->
-    <Dialog
-      v-model:visible="addSubtaskDialogVisible"
-      modal
-      header="Add Subtask"
-      :style="{ width: '500px' }"
-    >
-      <div class="flex flex-col gap-3">
-        <div>
-          <label class="font-semibold block mb-1">Service</label>
-          <Dropdown
-            v-model="selectedServiceForSubtask"
-            :options="services"
-            optionLabel="Name"
-            optionValue="SID"
-            placeholder="Select service"
-            filter
-            class="w-full"
+          <Button
+            :label="t('common.cancel')"
+            outlined
+            @click="subtaskDialogVisible = false"
+          />
+          <Button
+            :label="t('common.add')"
+            @click="saveSubtask"
           />
         </div>
-        <div>
-          <label class="font-semibold block mb-1">Comment</label>
-          <InputText v-model="subtaskComment" class="w-full" />
-        </div>
       </div>
-
-      <template #footer>
-        <Button label="Cancel" outlined @click="addSubtaskDialogVisible = false" />
-        <Button label="Add" @click="saveSubtask" :disabled="!selectedServiceForSubtask" />
-      </template>
     </Dialog>
+
+
+    <!-- DELETE DIALOG -->
+    <Dialog
+      v-model:visible="deleteDialogVisible"
+      :header="t('works.delete')"
+      modal
+      style="width:400px"
+      class="custom-dialog"
+    >
+      <p>{{ t("works.confirm_delete") }}</p>
+
+      <div class="flex justify-end gap-2 mt-4">
+        <Button :label="t('common.cancel')" outlined @click="deleteDialogVisible=false" />
+        <Button
+          :label="t('common.delete')"
+          severity="danger"
+          @click="handleConfirmDelete"
+        />
+      </div>
+    </Dialog>
+
+    <!-- ADD WORK -->
+    <BoatAddWorkDialog
+      v-model:visible="addWorkDialogVisible"
+      :AID="AID"
+      @created="emit('refresh')"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import { useRoute } from "vue-router";
-import { useAuthStore } from "../../stores/auth";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
-import { useToast } from "primevue/usetoast";
-import { createWork, getWorks, updateWork, updateWorkState, deleteWork } from "../../services/workService";
-import { getServices } from "../../services/serviceService";
+import { useAuthStore } from "../../stores/auth";
+import { updateWork, deleteWork } from "../../services/workService";
 import BoatAddWorkDialog from "./BoatAddWorkDialog.vue";
+import { getServices } from "../../services/serviceService";
+import { getUsers } from "../../services/userService";
+import { createWorkForStorage } from "../../services/workService";
 
-const { t } = useI18n({ useScope: "global" });
-const route = useRoute();
+
+const props = defineProps({
+  AID: Number,
+  works: Array
+});
+const emit = defineEmits(["refresh"]);
+
+const { t } = useI18n();
 const auth = useAuthStore();
-const toast = useToast();
 
-const works = ref([]);
-const loading = ref(true);
-const stateDialogVisible = ref(false);
-const selectedWork = ref(null);
-const selectedState = ref(null);
+/* STATE */
 const expandedRows = ref([]);
-const addNewWorkDialogVisible = ref(false);
-const editWorkDialogVisible = ref(false);
-const addSubtaskDialogVisible = ref(false);
-const selectedWorkForEdit = ref(null);
-const selectedWorkForSubtask = ref(null);
-
-const services = ref([]);
-const selectedServiceForSubtask = ref(null);
+const manageDialogVisible = ref(false);
+const deleteDialogVisible = ref(false);
+const addWorkDialogVisible = ref(false);
+const subtaskDialogVisible = ref(false);
+const parentForSubtask = ref(null);
+const subtaskSID = ref(null);
 const subtaskComment = ref("");
+const services = ref([]);
+const employees = ref([]);
+const editComment = ref("");
 
+
+
+
+const selectedWork = ref(null);
+const editState = ref(null);
+const editUID = ref(null);
+const editHR = ref(null);
+
+
+onMounted(async () => {
+  services.value = await getServices();
+  const users = await getUsers();
+  employees.value = users.filter(u =>
+    ["Admin", "Employee"].includes(u.Role)
+  );
+});
+
+/* PERMISSIONS */
 const isAdminOrEmployee = computed(() =>
   ["Admin", "Employee"].includes(auth.user?.Role)
 );
 
+const canChangeWorker = computed(() =>
+  selectedWork.value &&
+  !selectedWork.value.parentWID &&
+  selectedWork.value.State === "ToDo"
+);
+
+const canChangeHours = computed(() =>
+  selectedWork.value &&
+  !selectedWork.value.parentWID &&
+  selectedWork.value.State !== "Done"
+);
+
+/* OPTIONS */
 const stateOptions = [
-  { label: "To do", value: "ToDo" },
-  { label: "In progress", value: "InProgress" },
-  { label: "Done", value: "Done" },
+  { label: t("works.state_TODO"), value: "ToDo" },
+  { label: t("works.state_INPROGRESS"), value: "InProgress" },
+  { label: t("works.state_DONE"), value: "Done" },
 ];
 
-onMounted(async () => {
-  await fetchWorks();
-  try {
-    services.value = await getServices();
-  } catch (err) {
-    console.error("Failed to load services", err);
-  }
-});
 
-async function fetchWorks() {
-  try {
-    loading.value = true;
-    const boatId = route.params.id;
-    works.value = await getWorks(boatId);
-    expandedRows.value = works.value.filter((w) => w.subtasks?.length);
-  } catch (err) {
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: t("boat.load_works_error"),
-      life: 3000,
-    });
-  } finally {
-    loading.value = false;
-  }
-}
 
-function formatDate(dateStr) {
-  return dateStr ? new Date(dateStr).toLocaleDateString() : "—";
-}
-
-function getStateColor(state) {
-  switch (state) {
-    case "Done": return "success";
-    case "InProgress": return "info";
-    case "ToDo": return "warning";
-    default: return null;
-  }
-}
-
-function openStateDialog(work) {
+/* ACTIONS */
+function openManageDialog(work) {
   selectedWork.value = work;
-  selectedState.value = work.State;
-  stateDialogVisible.value = true;
+  editState.value = work.State;
+  editUID.value = work.UID;
+  editHR.value = work.HR;
+  editComment.value = work.Comment;
+  manageDialogVisible.value = true;
 }
 
-async function saveWorkState() {
-  try {
-    await updateWorkState(selectedWork.value.WID, selectedState.value);
-    toast.add({ severity: "success", summary: "State updated", life: 2000 });
-    stateDialogVisible.value = false;
-    await fetchWorks();
-  } catch {
-    toast.add({ severity: "error", summary: "Error updating state", life: 3000 });
-  }
+function openSubtaskDialog(work) {
+  parentForSubtask.value = work;
+  subtaskSID.value = null;
+  subtaskComment.value = "";
+  subtaskDialogVisible.value = true;
 }
 
-async function handleDeleteWork(id) {
-  if (!confirm(t("boat.confirm_delete_work"))) return;
-  try {
-    await deleteWork(id);
-    toast.add({ severity: "success", summary: "Work deleted", life: 2000 });
-    await fetchWorks();
-  } catch {
-    toast.add({ severity: "error", summary: "Error deleting work", life: 3000 });
-  }
+
+async function saveWorkChanges() {
+  await updateWork(selectedWork.value.WID, {
+    State: editState.value,
+    Comment: editComment.value,
+    UID: canChangeWorker.value ? editUID.value : undefined,
+    HR: canChangeHours.value ? editHR.value : undefined
+  });
+
+  manageDialogVisible.value = false;
+  emit("refresh");
+}
+
+
+async function saveSubtask() {
+  await createWorkForStorage(props.AID, {
+    parentWID: parentForSubtask.value.WID,
+    SID: subtaskSID.value,
+    Comment: subtaskComment.value || t("works.subTasks"),
+    State: "ToDo"
+  });
+
+  subtaskDialogVisible.value = false;
+  emit("refresh");
+}
+
+
+function confirmDelete(work) {
+  selectedWork.value = work;
+  deleteDialogVisible.value = true;
+}
+
+async function handleConfirmDelete() {
+  await deleteWork(selectedWork.value.WID);
+  deleteDialogVisible.value = false;
+  emit("refresh");
 }
 
 function openCreateDialog() {
-  addNewWorkDialogVisible.value = true;
+  addWorkDialogVisible.value = true;
 }
 
-function openEditDialog(work) {
-  selectedWorkForEdit.value = { ...work };
-  editWorkDialogVisible.value = true;
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString() : "—";
 }
 
-async function saveEditedWork() {
-  try {
-    await updateWork(selectedWorkForEdit.value.WID, {
-      Comment: selectedWorkForEdit.value.Comment,
-      HR: selectedWorkForEdit.value.HR,
-    });
-    toast.add({ severity: "success", summary: "Work updated", life: 2000 });
-    editWorkDialogVisible.value = false;
-    await fetchWorks();
-  } catch {
-    toast.add({ severity: "error", summary: "Failed to update work", life: 3000 });
-  }
+function getStateColor(s) {
+  return { ToDo:"warning", InProgress:"info", Done:"success" }[s];
 }
-
-function openAddSubtaskDialog(work) {
-  selectedWorkForSubtask.value = work;
-  addSubtaskDialogVisible.value = true;
-}
-
-async function saveSubtask() {
-  try {
-    await createWork({
-      SID: selectedServiceForSubtask.value,
-      BID: route.params.id,
-      seasonID: works.value[0]?.seasonID || 1,
-      UID: auth.user.UID,
-      parentWID: selectedWorkForSubtask.value.WID,
-      Comment: subtaskComment.value || "Subtask",
-      State: "ToDo",
-    });
-    toast.add({ severity: "success", summary: "Subtask added", life: 2000 });
-    addSubtaskDialogVisible.value = false;
-    selectedServiceForSubtask.value = null;
-    subtaskComment.value = "";
-    await fetchWorks();
-  } catch {
-    toast.add({ severity: "error", summary: "Failed to add subtask", life: 3000 });
-  }
-}
-
-defineExpose({
-  fetchWorks
-});
 </script>
+
+
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

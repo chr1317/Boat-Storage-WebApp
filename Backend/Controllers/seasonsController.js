@@ -19,42 +19,63 @@ module.exports = {
   // CREATE SEASON
   // -------------------------------------------------------------------
   async create(req, res) {
-    const t = await sequelize.transaction();
-    try {
-      const { year_start, year_end, StartDate, EndDate } = req.body;
+  const t = await sequelize.transaction();
+  try {
+    const { year_start, year_end } = req.body;
 
-      if (!year_start || !year_end || !StartDate || !EndDate) {
-        await t.rollback();
-        return res.status(400).json({ error: "All fields are required" });
-      }
-
-      const s = new Date(StartDate);
-      const e = new Date(EndDate);
-
-      if (Number.isNaN(s) || Number.isNaN(e) || e < s) {
-        await t.rollback();
-        return res.status(400).json({ error: "Incorrect date range" });
-      }
-
-      if (await hasOverlap(s, e, null, t)) {
-        await t.rollback();
-        return res.status(409).json({ error: "Conflict with existing season" });
-      }
-
-      const rec = await models.Seasons.create(
-        { year_start, year_end, StartDate: s, EndDate: e },
-        { transaction: t }
-      );
-
-      await t.commit();
-      res.status(201).json(rec);
-
-    } catch (e) {
+    // wymagane lata
+    if (!Number.isInteger(year_start) || !Number.isInteger(year_end)) {
       await t.rollback();
-      console.error(e);
-      res.status(500).json({ error: "Error while creating season" });
+      return res.status(400).json({ error: "year_start and year_end are required (integers)" });
     }
-  },
+
+    // zawsze różnica 1 roku
+    if (year_end !== year_start + 1) {
+      await t.rollback();
+      return res.status(400).json({ error: "year_end must be exactly year_start + 1" });
+    }
+
+    // stałe daty sezonu: 01.09 -> 31.08
+    // UWAGA: używam UTC, żeby uniknąć jazdy z timezone (DST) w MySQL/JS
+    const s = new Date(Date.UTC(year_start, 8, 1));   // Sep=8
+    const e = new Date(Date.UTC(year_end, 7, 31));    // Aug=7
+
+    // overlap check (zostaje jak masz)
+    if (await hasOverlap(s, e, null, t)) {
+      await t.rollback();
+      return res.status(409).json({ error: "Conflict with existing season" });
+    }
+
+    // opcjonalnie: blokada duplikatu kombinacji lat (przed create)
+    const exists = await models.Seasons.findOne({
+      where: { year_start, year_end },
+      transaction: t
+    });
+    if (exists) {
+      await t.rollback();
+      return res.status(409).json({ error: "Season with this year range already exists" });
+    }
+
+    const rec = await models.Seasons.create(
+      {
+        year_start,
+        year_end,
+        // dopasuj nazwy pól do modelu/tabeli:
+        startDate: s,
+        endDate: e
+      },
+      { transaction: t }
+    );
+
+    await t.commit();
+    return res.status(201).json(rec);
+  } catch (e) {
+    await t.rollback();
+    console.error(e);
+    return res.status(500).json({ error: "Error while creating season" });
+  }
+},
+
 
   // -------------------------------------------------------------------
   // LIST SEASONS

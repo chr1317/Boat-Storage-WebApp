@@ -69,6 +69,7 @@
   modal
   :header="t('hall.add')"
   :style="{ width: '90vw', maxWidth: '480px' }"
+  class="custom-dialog"
 >
   <div class="flex flex-col gap-6 p-4">
 
@@ -117,6 +118,7 @@
   modal
   header="Delete hall"
   :style="{ width: '350px' }"
+  class="custom-dialog"
 >
   <p>Are you sure you want to delete <strong>{{ hallToDelete?.Name }}</strong>?</p>
 
@@ -236,5 +238,12 @@ function openHall(hall) {
 }
 </script>
 
-<style scoped>
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
 </style>

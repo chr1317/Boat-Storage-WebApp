@@ -19,7 +19,7 @@ app.use((req, _res, next) => {
 
 const CORS_ORIGIN = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
-  : ["http://localhost:5173", "http://localhost:3000", "http://192.168.68.110:5173"];
+  : ["http://localhost:5173", "http://localhost:3000", "http://192.168.68.105:5173"];
 
 app.use(
   cors({

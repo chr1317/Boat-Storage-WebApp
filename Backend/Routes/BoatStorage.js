@@ -9,9 +9,13 @@ router.post("/", auth(["Admin","Employee"]), BoatStorageController.create);
 
 router.get("/", auth(["Admin","Employee"]), BoatStorageController.list);
 
+router.get("/light", auth(["Admin","Employee"]), BoatStorageController.listLight);
+
 router.get("/mine", auth(["Client","Admin","Employee"]), BoatStorageController.mine);
 
-router.get("/:id", auth(["Admin","Employee"]), BoatStorageController.getOne);
+router.get("/byBoat/:bid", auth(["Admin","Employee","Client"]), BoatStorageController.byBoat);
+
+router.get("/:id", auth(["Admin","Employee","Client"]), BoatStorageController.getOne);
 
 router.put("/:id", auth(["Admin","Employee"]), BoatStorageController.update);
 

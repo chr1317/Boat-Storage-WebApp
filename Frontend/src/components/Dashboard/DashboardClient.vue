@@ -116,3 +116,13 @@ function statusSeverity(boat) {
   return boat.out ? "warning" : "success";
 }
 </script>
+
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

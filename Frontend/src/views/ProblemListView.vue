@@ -43,6 +43,7 @@
     modal
     :header="t('problems.details')"
     :style="{ width: '90vw', maxWidth: '500px' }"
+    class="custom-dialog"
   >
     <div v-if="selected" class="flex flex-col gap-4">
 
@@ -117,6 +118,7 @@
     modal
     :header="isEditing ? t('problems.edit') : t('problems.add')"
     :style="{ width: '90vw', maxWidth: '450px' }"
+    class="custom-dialog"
   >
     <div class="flex flex-col gap-4">
 
@@ -278,3 +280,12 @@ function formatDate(d) {
   return d ? new Date(d).toLocaleString() : "-";
 }
 </script>
+<style scoped>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

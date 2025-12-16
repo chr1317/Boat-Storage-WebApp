@@ -1,25 +1,82 @@
+// Frontend/src/services/problemService.js
 import { apiFetch } from "./apiClient";
 
-// Lista wszystkich problemów (admin / employee), lub problemów klienta
-export function getProblems() {
-  return apiFetch(`/problems`);
+// ==========================
+// LISTA PROBLEMÓW
+// ==========================
+
+/**
+ * Lista problemów
+ * options:
+ *  - AID: problemy dla konkretnego przechowywania (BoatStorage)
+ *  - BID: problemy dla łodzi (historia)
+ */
+export function getProblems(options = {}) {
+  const params = new URLSearchParams();
+
+  if (options.AID) params.set("AID", options.AID);
+  if (options.BID) params.set("BID", options.BID);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch(`/problems${query}`);
 }
 
-// Pobranie jednego problemu
+/** Problemy dla konkretnego przechowywania (AID) */
+export function getProblemsByStorage(AID) {
+  return getProblems({ AID });
+}
+
+/** Problemy dla łodzi (historia po BID) */
+export function getProblemsByBoat(BID) {
+  return getProblems({ BID });
+}
+
+// ==========================
+// POJEDYNCZY PROBLEM
+// ==========================
+
 export function getProblemById(id) {
   return apiFetch(`/problems/${id}`);
 }
 
-// Tworzenie problemu
-export function createProblem(payload, autoWork = false) {
+// ==========================
+// TWORZENIE
+// ==========================
+
+/**
+ * Tworzenie problemu dla konkretnego AID (BoatStorage)
+ * payload np:
+ *  { Description, Type?, SID?, Date?, HR?, Comment?, UID? }
+ * autoWork = true → staff automatycznie tworzy Work
+ */
+export function createProblemForStorage(AID, payload, autoWork = false) {
   const query = autoWork ? "?autoWork=true" : "";
   return apiFetch(`/problems${query}`, {
     method: "POST",
-    body: payload,
+    body: {
+      ...payload,
+      AID,
+    },
   });
 }
 
-// Utworzenie pracy z problemu (tylko staff)
+/**
+ * Legacy: createProblem(payload, autoWork)
+ *  – po refaktorze payload MUSI zawierać AID
+ */
+export function createProblem(payload, autoWork = false) {
+  if (!payload.AID) {
+    console.warn(
+      "[problemService] createProblem: brak AID – zalecane createProblemForStorage(AID, payload)"
+    );
+  }
+  return createProblemForStorage(payload.AID, payload, autoWork);
+}
+
+// ==========================
+// PRACA Z PROBLEMU
+// ==========================
+
 export function createWorkFromProblem(id, payload) {
   return apiFetch(`/problems/${id}/work`, {
     method: "POST",
@@ -27,7 +84,10 @@ export function createWorkFromProblem(id, payload) {
   });
 }
 
-// Aktualizacja statusu (staff)
+// ==========================
+// UPDATE / STATUS / DELETE
+// ==========================
+
 export function updateProblemStatus(id, status) {
   return apiFetch(`/problems/${id}/status`, {
     method: "PUT",
@@ -35,7 +95,6 @@ export function updateProblemStatus(id, status) {
   });
 }
 
-// Edycja problemu (staff: type + description, client: tylko description)
 export function updateProblem(id, payload) {
   return apiFetch(`/problems/${id}`, {
     method: "PUT",
@@ -50,6 +109,7 @@ export function deleteProblemById(id) {
   });
 }
 
+// Akceptacja problemu typu Issue przez klienta
 export function approveProblem(id) {
   return apiFetch(`/problems/${id}/approve`, {
     method: "PUT",

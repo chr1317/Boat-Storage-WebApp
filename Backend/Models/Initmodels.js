@@ -57,7 +57,7 @@ function initModels(sequelize) {
   BoatPosition.belongsTo(Boathalls, { foreignKey: "BHID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boathalls.hasMany(BoatPosition, { foreignKey: "BHID" });
 
-  // 🔹 Boats ↔ Problems ↔ Work
+  // 🔹 Boats ↔ Problems
   Problems.belongsTo(Boats, { foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boats.hasMany(Problems, { foreignKey: "BID" });
 
@@ -73,16 +73,16 @@ function initModels(sequelize) {
 
   Work.belongsTo(User, { foreignKey: "UID", onDelete: "SET NULL", onUpdate: "CASCADE" });
   User.hasMany(Work, { foreignKey: "UID" });
-  
+
   Work.hasMany(Work, { as: "subtasks", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Work.belongsTo(Work, { as: "parent", foreignKey: "parentWID", onDelete: "CASCADE", onUpdate: "CASCADE" });
 
-    // 🔹 BoatOutRequest ↔ Boats
-  BoatOutRequest.belongsTo(Boats, {  foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  // 🔹 BoatOutRequest ↔ Boats
+  BoatOutRequest.belongsTo(Boats, { foreignKey: "BID", onDelete: "CASCADE", onUpdate: "CASCADE" });
   Boats.hasMany(BoatOutRequest, { foreignKey: "BID" });
 
   // 🔹 BoatOutRequest ↔ Seasons
-  BoatOutRequest.belongsTo(Seasons, {  foreignKey: "seasonID", onDelete: "SET NULL", onUpdate: "CASCADE" });
+  BoatOutRequest.belongsTo(Seasons, { foreignKey: "seasonID", onDelete: "SET NULL", onUpdate: "CASCADE" });
   Seasons.hasMany(BoatOutRequest, { foreignKey: "seasonID" });
 
   // 🔹 BoatOutRequest ↔ User (requestedBy)
@@ -93,9 +93,19 @@ function initModels(sequelize) {
   BoatOutRequest.belongsTo(User, { as: "Handler", foreignKey: "handledBy", onDelete: "SET NULL", onUpdate: "CASCADE" });
   User.hasMany(BoatOutRequest, { as: "HandledOuts", foreignKey: "handledBy" });
 
+  // 🔹 Problems ↔ Work
   Problems.hasMany(Work, { foreignKey: "PID", onDelete: "CASCADE", onUpdate: "CASCADE" });
-Work.belongsTo(Problems, { foreignKey: "PID", onDelete: "CASCADE", onUpdate: "CASCADE" });
+  Work.belongsTo(Problems, { foreignKey: "PID", onDelete: "CASCADE", onUpdate: "CASCADE" });
 
+  // 🔹 NOWE: BoatStorage ↔ Work/Problems/BoatOutRequest po AID (sezonowe powiązanie)
+  Work.belongsTo(BoatStorage, { foreignKey: "AID", onDelete: "Cascade", onUpdate: "CASCADE" });
+  BoatStorage.hasMany(Work, { foreignKey: "AID" });
+
+  Problems.belongsTo(BoatStorage, { foreignKey: "AID", onDelete: "Cascade", onUpdate: "CASCADE" });
+  BoatStorage.hasMany(Problems, { foreignKey: "AID" });
+
+  BoatOutRequest.belongsTo(BoatStorage, { foreignKey: "AID", onDelete: "Cascade", onUpdate: "CASCADE" });
+  BoatStorage.hasMany(BoatOutRequest, { foreignKey: "AID" });
 
   return {
     Boats,

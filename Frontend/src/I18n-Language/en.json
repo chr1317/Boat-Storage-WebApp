@@ -12,6 +12,26 @@
     "edit": "Edit",
     "delete": "Delete",
     "loading": "Loading...",
+    "required": "Required",
+    "actions": "Actions",
+    "open": "Open",
+    "next": "Next",
+    "back": "Back",
+    "create": "Create",
+    "not_set": "Not set",
+    "date": "Date",
+    "status": "Status",
+    "export_pdf": "Export to PDF",
+    "filters": "Filters",
+    "no_filters": "No filters applied",
+    "generated_at": "Generated at",
+    "year": "Year",
+    "month": "Month",
+    "clear_filters": "Clear filters",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "validation": {
     "required": "Required"
   },
   "routes": {
@@ -27,7 +47,17 @@
     "Works": "Works",
     "boatHalls": "Boathalls",
     "BoatHalls": "Boathalls",
-    "HallMap": "Hall map"
+    "HallMap": "Hall map",
+    "BoatStorageDetail": "Boat Storage Details",
+    "BoatStorage": "Boat Storage list",
+    "Storage": "Storage",
+    "BoatHistory": "Boat Service History",
+    "Seasons": "Seasons"
+  },
+  "tabs": {
+    "work": "Work",
+    "problems": "Problems",
+    "requests": "Requests"
   },
   "login": {
     "email": "Email",
@@ -41,9 +71,13 @@
     "password_uppercase_req": "Password must contain at least one uppercase letter",
     "password_number_req": "Password must contain at least one number",
     "password_special_req": "Password must contain at least one special character",
-    "bad_email_format": "Bad email format"
+    "bad_email_format": "Bad email format",
+    "login_error": "Error logging in",
+    "missing_fields": "Missing email or password",
+    "missing_fields_detail": "Please enter your email and password."
   },
   "boat": {
+    "name": "Boat name",
     "boat": "Boat",
     "owner": "Owner",
     "phone": "Owners phone number",
@@ -83,11 +117,51 @@
     "width": "Width",
     "height": "Height",
     "weight": "Weight",
-    "select_boat": "Select boat"
+    "select_boat": "Select boat",
+    "unknownBoat": "Unknown boat",
+    "hallPosition": "Hall position",
+    "arrivalDate": "Arrival date",
+    "budget": "Budget",
+    "noPosition": "No assigned position",
+    "select_worker": "Select employee",
+    "basicInfo": "Basic info",
+    "dimensions": "Dimensions",
+    "hin": "HIN",
+    "deepness": "Deepness",
+    "engine_Model": "Model",
+    "engine_Brand": "Brand",
+    "engine_Engine_nr": "Engine number",
+    "engine_Reversing_gear": "Reversing gear",
+    "engine_Reversing_gear_nr": "Reversing gear number",
+    "engine_Sterndrive": "Sterndrive",
+    "engine_Sterndrive_nr": "Sterndrive number",
+    "engine_Transom": "Transom",
+    "engine_Transom_nr": "Transom number",
+    "engine_BT": "BT",
+    "engine_ST": "ST",
+    "engine_Moto_H": "Engine hours",
+
+    "createStorageNow": "Create storage record for current season",
+    "storage_hint": "If enabled, the boat will be automatically added to the active season.",
+
+    "missing_fields": "Fill required boat fields",
+    "missing_dimensions": "Length and width are required",
+    "created": "Boat created successfully",
+    "engine": "Engine",
+    "summary": "Summary",
+    "select_owner": "Select owner",
+    "addBoat": "Add boat",
+    "review_before_submit": "Please review the boat details before submitting",
+    "storage_will_be_created": "Storage record will be created",
+    "show_on_hall": "Show on hall",
+    "generate_qr": "Generate QR code",
+    "go_to_details": "Go to details"
+
   },
   "clientBoats": {
     "title": "Boats",
-    "status_in_hall": "In hall"
+    "status_in_hall": "In hall",
+    "no_boats": "No boats found"
   },
   "employee": {
     "works_title": "Your works",
@@ -101,6 +175,7 @@
     "actions": "Actions",
     "open": "Open",
     "open_boat": "Open boat",
+    "open_storage": "Open storage",
     "comment": "Comment",
     "details": "Work details",
 
@@ -116,7 +191,19 @@
     "name": "Name",
     "actions": "Actions",
     "add": "Add service",
-    "id": "ID"
+    "id": "ID",
+    "details": "Service details",
+    "history_title": "Service history",
+    "service": "Service",
+    "employee": "Employee",
+    "hours": "Hours",
+    "status": "Status",
+    "comment": "Comment",
+    "filter_employee": "Filter by employee",
+    "filter_year": "Filter by year",
+    "filter_month": "Filter by month",
+    "filter_date": "Filter by date",
+    "no_results": "No matching records found"
   },
   "users": {
     "details": "Details",
@@ -154,7 +241,12 @@
   "add": "Add problem",
   "approveTitle": "Confirm approval",
   "approveConfirm": "Are you sure you want to approve problem",
-  "approveButton": "Approve"
+  "approveButton": "Approve",
+  "approved": "Approved",
+  "overview": "Problems overview",
+  "status_New": "New",
+  "status_InProgress": "In progress",
+  "status_Resolved": "Resolved"
 },
  "outRequest": {
     "title": "Departure request",
@@ -188,7 +280,10 @@
     "approve_failed": "Failed to approve request.",
     "rejected": "Request rejected.",
     "reject_failed": "Failed to reject request.",
-    "reason": "Reject reason"
+    "reason": "Reject reason",
+    "section_title": "Departure requests",
+    "pending": "Pending",
+    "pending_approval": "pending approval"
   },
   "works": {
     "all_title": "Works",
@@ -244,5 +339,54 @@
     "created": "Hall created",
     "height": "Height",
     "margin": "Margin"
+  },
+  "season": {
+    "management": "Storage management",
+    "assign": "Assign to season",
+    "assign_header": "Assign boat to season",
+    "choose_placeholder": "Select a season...",
+    "confirm_assign": "Confirm assignment",
+    "open": "Open",
+    "previous": "Previous seasons",
+    "upcoming": "Upcoming seasons",
+    "full_history": "Full storage history",
+    "no_available": "No available seasons",
+    "unknown": "Unknown season",
+    "active": "Active season",
+    "assign_info": "Assign boat {boat} to season",
+    "no_storage_records": "No storage records found",
+    "season": "Season",
+    "already_exists": "Season already exists",
+    "add": "Add season",
+    "year_start": "Year start",
+    "year_end": "Year end",
+    "label": "Label",
+    "list_title": "Seasons list",
+    "choose_start_year": "Select start year..."
+  },
+  "storage": {
+    "budget": "Budget",
+    "arrival": "Arrival date",
+    "delete_header": "Delete storage record",
+    "confirm_delete": "Are you sure you want to delete this storage record?",
+    "no_active": "No active storage records"
+  },
+  "months": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "password": {
+    "change_title": "Set new Password"
   }
+
 }

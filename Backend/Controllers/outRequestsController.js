@@ -16,99 +16,129 @@ function daysBetween(startDate, targetDate) {
   return Math.floor((t - s) / (1000 * 60 * 60 * 24));
 }
 
-async function resolveSeasonForBoat(BID, t) {
-  const storage = await models.BoatStorage.findOne({
-    where: { BID },
-    order: [["seasonID","DESC"]],
+async function resolveStorageContext(AID, t) {
+  // ETAP 3: pracujemy per BoatStorage → wymagamy AID
+  if (!AID) return null;
+
+  const storage = await models.BoatStorage.findByPk(AID, {
     transaction: t,
   });
-  return storage ? storage.seasonID : null;
+  if (!storage) return null;
+
+  return {
+    BID: storage.BID,
+    seasonID: storage.seasonID,
+    AID: storage.AID,
+  };
 }
 
-async function hasWorksThisSeason(BID, seasonID, t) {
+async function hasWorksThisSeason(BID, seasonID, t, AID = null) {
   if (!seasonID) return false;
-  const count = await models.Work.count({ where: { BID, seasonID }, transaction: t });
+  const where = { BID, seasonID };
+  if (AID) where.AID = AID;
+  const count = await models.Work.count({ where, transaction: t });
   return count > 0;
 }
+
+
 
 module.exports = {
 
   // ----------------------------------------
   // POST /out-requests
   // ----------------------------------------
-  async create(req, res) {
-    const t = await sequelize.transaction();
-    try {
-      const { BID, type, preferredWeekStart, preferredWeekEnd, comment } = req.body || {};
+   // ----------------------------------------
+// POST /out-requests
+// ----------------------------------------
+async create(req, res) {
+  const t = await sequelize.transaction();
+  try {
+    const {
+      AID,
+      type,
+      preferredWeekStart,
+      preferredWeekEnd,
+      comment,
+    } = req.body || {};
 
-      if (!BID || !type || !preferredWeekStart || !preferredWeekEnd) {
-        await t.rollback();
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      if (!["Launch","Trailer"].includes(type)) {
-        await t.rollback();
-        return res.status(400).json({ error: "Invalid type" });
-      }
-
-      const boat = await models.Boats.findByPk(BID, { transaction: t });
-      if (!boat) {
-        await t.rollback();
-        return res.status(404).json({ error: "Boat not found" });
-      }
-
-      // Launch months restriction
-      if (type === "Launch") {
-        const month = new Date(preferredWeekStart).getUTCMonth() + 1;
-        if (month < START_MONTH || month > END_MONTH) {
-          await t.rollback();
-          return res.status(400).json({
-            error: "Launch is only allowed between April and September",
-          });
-        }
-      }
-
-      const isStaff = ["Admin","Employee"].includes(req.user.role);
-      if (!isStaff && boat.UID !== req.user.id) {
-        await t.rollback();
-        return res.status(403).json({ error: "Forbidden" });
-      }
-
-      // season
-      const seasonID = await resolveSeasonForBoat(BID, t);
-
-      // only 1 pending request per boat+season
-      const existingPending = await models.BoatOutRequest.findOne({
-        where: { BID, seasonID, status: "Pending" },
-        transaction: t,
-        lock: t.LOCK.UPDATE,
+    if (!AID || !type || !preferredWeekStart || !preferredWeekEnd) {
+      await t.rollback();
+      return res.status(400).json({
+        error: "AID, type and preferred week are required",
       });
-      if (existingPending) {
-        await t.rollback();
-        return res.status(409).json({ error: "Pending request already exists for this boat" });
-      }
+    }
 
-      // minimal notice
-      const today = new Date();
-      const diffDays = daysBetween(today, preferredWeekStart);
-      const works = await hasWorksThisSeason(BID, seasonID, t);
+    if (!["Launch", "Trailer"].includes(type)) {
+      await t.rollback();
+      return res.status(400).json({ error: "Invalid type" });
+    }
 
-      let minDaysRequired;
-      if (type === "Launch") {
-        minDaysRequired = works ? MIN_DAYS_LAUNCH_WITH_WORKS : MIN_DAYS_LAUNCH_NO_WORKS;
-      } else {
-        minDaysRequired = MIN_DAYS_TRAILER;
-      }
+    const ctx = await resolveStorageContext(AID, t);
+    if (!ctx) {
+      await t.rollback();
+      return res.status(400).json({
+        error: "BoatStorage (AID) not found for this request",
+      });
+    }
 
-      if (diffDays < minDaysRequired) {
+    const { BID, seasonID } = ctx;
+
+    const boat = await models.Boats.findByPk(BID, { transaction: t });
+    if (!boat) {
+      await t.rollback();
+      return res.status(404).json({ error: "Boat not found" });
+    }
+
+    // Launch months restriction
+    if (type === "Launch") {
+      const month = new Date(preferredWeekStart).getUTCMonth() + 1;
+      if (month < START_MONTH || month > END_MONTH) {
         await t.rollback();
         return res.status(400).json({
-          error: `Too soon. Minimal lead time is ${minDaysRequired} days for this type of departure.`,
+          error: `Launch allowed only between months ${START_MONTH}-${END_MONTH}`,
         });
       }
+    }
 
-      const rec = await models.BoatOutRequest.create({
+    // one pending request per boat+season
+    const existingPending = await models.BoatOutRequest.findOne({
+      where: { BID, seasonID, status: "Pending" },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+    if (existingPending) {
+      await t.rollback();
+      return res.status(409).json({
+        error:
+          "Pending request already exists for this boat and season",
+      });
+    }
+
+    // minimal notice depending on works
+    const today = new Date();
+    const diffDays = daysBetween(today, preferredWeekStart);
+    const works = await hasWorksThisSeason(BID, seasonID, t, AID);
+
+    let minDaysRequired;
+    if (type === "Launch") {
+      minDaysRequired = works
+        ? MIN_DAYS_LAUNCH_WITH_WORKS
+        : MIN_DAYS_LAUNCH_NO_WORKS;
+    } else {
+      minDaysRequired = MIN_DAYS_TRAILER;
+    }
+
+    if (diffDays < minDaysRequired) {
+      await t.rollback();
+      return res.status(400).json({
+        error: `Too soon. Minimal lead time is ${minDaysRequired} days for this type of departure.`,
+      });
+    }
+
+    const rec = await models.BoatOutRequest.create(
+      {
         BID,
+        AID,
         seasonID,
         requestedBy: req.user.id,
         type,
@@ -116,80 +146,122 @@ module.exports = {
         preferredWeekEnd,
         comment: comment || null,
         status: "Pending",
-      }, { transaction: t });
+      },
+      { transaction: t }
+    );
 
-      await t.commit();
-      res.status(201).json(rec);
+    await t.commit();
+    res.status(201).json(rec);
+  } catch (e) {
+    await t.rollback();
+    console.error("Error creating out request:", e);
+    res.status(500).json({
+      error: "Server error while creating out request",
+    });
+  }
+},
 
-    } catch (e) {
-      await t.rollback();
-      console.error("Error creating out request:", e);
-      res.status(500).json({ error: "Server error while creating out request" });
-    }
-  },
+
 
   // ----------------------------------------
   // GET /out-requests
   // ----------------------------------------
   async listAll(req, res) {
-    try {
-      const { status } = req.query;
-      const where = {};
+  try {
+    const { status, AID } = req.query;
+    const where = {};
 
-      if (status && ["Pending","Accepted","Rejected","Cancelled"].includes(status))
-        where.status = status;
-
-      const list = await models.BoatOutRequest.findAll({
-        where,
-        order: [["createdAt","DESC"]],
-        include: [
-          {
-            model: models.Boats,
-            include: [
-              { model: models.User, attributes: ["UID","Name","PhoneNr","Email"] },
-              { model: models.Boathalls },
-            ],
-          },
-          { model: models.Seasons },
-          { model: models.User, as: "Requester", attributes: ["UID","Name","Email"] },
-          { model: models.User, as: "Handler", attributes: ["UID","Name","Email"] },
-        ],
-      });
-
-      res.json(list);
-
-    } catch (e) {
-      console.error("Error listing out requests:", e);
-      res.status(500).json({ error: "Server error while listing out requests" });
+    if (
+      status &&
+      ["Pending", "Accepted", "Rejected", "Cancelled"].includes(status)
+    ) {
+      where.status = status;
     }
-  },
+
+    if (AID) {
+      const aid = parseInt(AID, 10);
+      if (Number.isNaN(aid)) {
+        return res.status(400).json({ error: "Invalid AID" });
+      }
+      where.AID = aid;
+    }
+
+    const list = await models.BoatOutRequest.findAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: models.Boats,
+          include: [
+            {
+              model: models.User,
+              attributes: ["UID", "Name", "PhoneNr", "Email"],
+            },
+            { model: models.Boathalls },
+          ],
+        },
+        { model: models.Seasons },
+        {
+          model: models.User,
+          as: "Requester",
+          attributes: ["UID", "Name", "Email"],
+        },
+        {
+          model: models.User,
+          as: "Handler",
+          attributes: ["UID", "Name", "Email"],
+        },
+      ],
+    });
+
+    res.json(list);
+  } catch (e) {
+    console.error("Error listing out requests:", e);
+    res.status(500).json({
+      error: "Server error while listing out requests",
+    });
+  }
+},
 
   // ----------------------------------------
   // GET /out-requests/my
   // ----------------------------------------
   async listMine(req, res) {
-    try {
-      const isClient = req.user.role === "Client";
-      const where = {};
+  try {
+    const isClient = req.user.role === "Client";
+    const { AID } = req.query;
+    const where = {};
 
-      if (isClient) where.requestedBy = req.user.id;
-
-      const list = await models.BoatOutRequest.findAll({
-        where,
-        order: [["createdAt","DESC"]],
-        include: [
-          { model: models.Boats, include: [{ model: models.Boathalls }] },
-          { model: models.Seasons },
-        ],
-      });
-
-      res.json(list);
-
-    } catch (e) {
-      console.error("Error listing my out requests:", e);
-      res.status(500).json({ error: "Server error while listing my out requests" });
+    if (isClient) {
+      where.requestedBy = req.user.id;
     }
-  },
+
+    if (AID) {
+      const aid = parseInt(AID, 10);
+      if (Number.isNaN(aid)) {
+        return res.status(400).json({ error: "Invalid AID" });
+      }
+      where.AID = aid;
+    }
+
+    const list = await models.BoatOutRequest.findAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      include: [
+        { model: models.Boats, include: [{ model: models.Boathalls }] },
+        { model: models.Seasons },
+      ],
+    });
+
+    res.json(list);
+  } catch (e) {
+    console.error("Error listing my out requests:", e);
+    res.status(500).json({
+      error: "Server error while listing my out requests",
+    });
+  }
+},
+
 
   // ----------------------------------------
   // PUT /out-requests/:id/approve

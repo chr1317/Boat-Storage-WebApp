@@ -1,5 +1,6 @@
 <template>
-  <div class="p-6 flex flex-col gap-4">
+  <div class="p-6 flex flex-col gap-6">
+
     <!-- Loader -->
     <div v-if="loading" class="text-center text-gray-500 py-10">
       <i class="pi pi-spin pi-spinner text-2xl"></i>
@@ -12,8 +13,8 @@
       <p class="mt-2">{{ error }}</p>
     </div>
 
-    <!-- Boat card -->
-    <Card v-else-if="boat">
+    <!-- BOAT CARD -->
+    <Card v-else>
       <template #title>
         <div class="flex justify-between items-center flex-wrap gap-3">
           <div>
@@ -32,16 +33,20 @@
             <span class="font-semibold">{{ t("boat.owner") }}:</span>
             <p>{{ boat.User?.Name || "-" }}</p>
           </div>
+
           <div>
             <span class="font-semibold">{{ t("boat.phone") }}:</span>
             <p>{{ boat.User?.PhoneNr || "-" }}</p>
           </div>
+
           <div>
             <span class="font-semibold">{{ t("boat.boathall") }}:</span>
             <p>
-              ID {{ boat.Boathall?.BHID }} ({{ boat.Boathall?.Length }}×{{ boat.Boathall?.Width }})
+              ID {{ boat.Boathall?.BHID }}
+              ({{ boat.Boathall?.Length }}×{{ boat.Boathall?.Width }})
             </p>
           </div>
+
           <div>
             <span class="font-semibold">{{ t("boat.qr") }}:</span>
             <p>{{ boat.QR }}</p>
@@ -49,42 +54,43 @@
         </div>
       </template>
     </Card>
-    <div
-  v-if="boat?.Boathall && isStaff"
-  class="flex justify-end mt-2"
-  >
-    <Button
-  v-if="boat?.Boathall && isStaff"
-  icon="pi pi-map"
-  label="Show on hall"
-  outlined
-  severity="info"
-  @click="showMap = true"
-/>
 
-<BoatHallMiniMap
-  v-model:visible="showMap"
-  :boatId="boat?.BID"
-  :bhid="boat?.Boathall?.BHID"
-/>
-  </div>
-    <!-- Qr dialog -->
-    <div v-if="isAdmin && boat && !isMobile" class="flex justify-end mt-4">
-    <Button
-      icon="pi pi-qrcode"
-      label="Generate QR Code"
-      outlined
-      severity="info"
-      @click="showQRDialog = true"
+    <!-- MAP BUTTON -->
+     <div>
+    <div v-if="boat?.Boathall && isStaff" class="flex justify-end">
+      <Button
+        icon="pi pi-map"
+        :label="t('boat.show_on_hall')"
+        outlined
+        severity="info"
+        @click="showMap = true"
+      />
+      <BoatHallMiniMap
+        v-model:visible="showMap"
+        :boatId="boat?.BID"
+        :bhid="boat?.Boathall?.BHID"
+      />
+    </div>
+
+    <!-- QR BUTTON -->
+    <div v-if="isAdmin && !isMobile" class="flex justify-end">
+      <Button
+        icon="pi pi-qrcode"
+        :label="t('boat.generate_qr')"
+        outlined
+        severity="info"
+        @click="showQRDialog = true"
+      />
+    </div>
+
+    <BoatQRDialog
+      v-if="boat"
+      v-model:visible="showQRDialog"
+      :boat="boat"
     />
-  </div>
+    </div>
 
-  <BoatQRDialog
-    v-if="boat"
-    v-model:visible="showQRDialog"
-    :boat="boat"
-  />
-    <!-- Tabs -->
+    <!-- TABS -->
     <TabView v-if="boat" v-model:activeIndex="activeTab" class="mt-4">
       <TabPanel :header="t('boat.info_tab')">
         <BoatInfoTab :boat="boat" />
@@ -93,125 +99,304 @@
       <TabPanel :header="t('boat.engine_tab')">
         <BoatEngineTab :boat="boat" />
       </TabPanel>
-
-      <TabPanel :header="t('boat.service_tab')">
-        <BoatServiceTab ref="worksTabRef" :boat="boat" />
-      </TabPanel>
-
-      <TabPanel :header="t('boat.problems_tab')">
-        <BoatProblemsTab :boat="boat" @work-created="refreshWorks"/>
-      </TabPanel>
     </TabView>
+
+    <!-- STORAGE MANAGEMENT -->
+    <Card>
+      <template #title>
+        <h3 class="text-xl font-bold">{{ t("season.management") }}</h3>
+      </template>
+
+      <template #content>
+
+  <!-- ASSIGN BUTTON -->
+  <div class="mb-4">
+    <Button
+      v-if="isStaff"
+      icon="pi pi-plus"
+      :label="t('season.assign')"
+      severity="info"
+      outlined
+      @click="openAssignDialog"
+    />
+  </div>
+
+  <!-- ALL STORAGES LIST -->
+  <div v-if="storages.length" class="flex flex-col gap-3">
+
+    <div
+      v-for="s in sortedStorages"
+      :key="s.AID"
+      class="p-3 rounded-md flex justify-between items-center border"
+      :class="storageClass(s)"
+    >
+      <div class="flex flex-col">
+        <span class="font-semibold">
+          {{ seasonLabel(s.Season) }}
+        </span>
+
+        <small class="text-gray-600">
+          AID: {{ s.AID }} • {{ storageStatusLabel(s) }}
+        </small>
+      </div>
+
+      <Button
+        icon="pi pi-folder-open"
+        size="small"
+        @click="goToStorage(s.AID)"
+      />
+    </div>
+
+  </div>
+
+  <div v-else class="text-gray-500 text-sm">
+    {{ t("season.no_storage_records") }}
+  </div>
+
+</template>
+
+    </Card>
+
+    <!-- FULL HISTORY -->
+    <Button
+      v-if="isStaff"
+      icon="pi pi-history"
+      :label="t('season.full_history')"
+      outlined
+      class="w-fit"
+      @click="goToHistory"
+    />
+
+    <!-- ASSIGN DIALOG (NAPRAWIONY) -->
+    <Dialog
+      v-if="isStaff"
+      v-model:visible="assignDialog"
+      :header="t('season.assign_header')"
+      modal
+      class="custom-dialog"
+      style="width: 420px"
+    >
+      <div class="flex flex-col gap-4">
+
+        <div class="text-sm text-gray-600">
+          {{ t("season.assign_info", { boat: boat?.name || "-" }) }}
+        </div>
+
+        <!-- Jeśli brak sezonów do przypisania -->
+        <div v-if="availableSeasons.length === 0" class="text-center text-gray-600 py-2">
+          {{ t("season.no_available") }}
+        </div>
+
+        <!-- Dropdown PrimeVue -->
+        <Dropdown
+          v-else
+          v-model="selectedSeason"
+          :options="availableSeasons"
+          optionLabel="label"
+          optionValue="seasonID"
+          :placeholder="t('season.choose_placeholder')"
+          class="w-full"
+          filter
+        />
+
+        <div class="flex justify-end gap-2 mt-2" >
+          <Button
+            :label="t('common.cancel')"
+            outlined
+            @click="assignDialog = false"
+          />
+          <Button
+            :label="t('season.confirm_assign')"
+            icon="pi pi-check"
+            severity="success"
+            :disabled="!selectedSeason || availableSeasons.length === 0"
+            @click="confirmAssign"
+          />
+        </div>
+      </div>
+    </Dialog>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, onUnmounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useToast } from "primevue/usetoast";
 import { useI18n } from "vue-i18n";
 import { useAuthStore } from "../stores/auth";
 
+import Card from "primevue/card";
+import Tag from "primevue/tag";
+import Button from "primevue/button";
+import Dialog from "primevue/dialog";
+import Dropdown from "primevue/dropdown";
+import TabView from "primevue/tabview";
+import TabPanel from "primevue/tabpanel";
 
-// Zakładki
-import BoatInfoTab from "../components/Boat/BoatInfoTab.vue";
-import BoatEngineTab from "../components/Boat/BoatEngineTab.vue";
-import BoatServiceTab from "../components/Boat/BoatServiceTab.vue";
-import BoatProblemsTab from "../components/Boat/BoatProblemsTab.vue";
 import BoatQRDialog from "../components/Boat/BoatQRDialog.vue";
 import BoatHallMiniMap from "../components/Boat/BoatHallMiniMap.vue";
 
+import BoatInfoTab from "../components/Boat/BoatInfoTab.vue";
+import BoatEngineTab from "../components/Boat/BoatEngineTab.vue";
 
-// Serwis API
-import { getBoat, getBoatByQR } from "../services/boatService";
+import { getBoat } from "../services/boatService";
+import { getBoatStorageByBoat, createBoatStorage } from "../services/boatStorageService";
+import { getSeasons } from "../services/seasonService";
 
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
-const { t } = useI18n({ useScope: "global" });
+const { t } = useI18n();
 
-const tabIndexMap = {
-  info: 0,
-  engine: 1,
-  service: 2,
-  problems: 3,
-};
-
-const boat = ref(null);
-const loading = ref(true);
-const error = ref(null);
-const showMap = ref(false);
-const activeTab = ref(0);
 const auth = useAuthStore();
 
-const width = ref(window.innerWidth);
-const isMobile = computed(() => width.value < 768);
-const isStaff = computed(() => auth.role === "Admin" || auth.role === "Employee");
+const boat = ref(null);
+const storages = ref([]);
+const seasons = ref([]);
 
-function handleResize() {
-  width.value = window.innerWidth;
+const loading = ref(true);
+const error = ref(null);
+
+const showMap = ref(false);
+const showQRDialog = ref(false);
+
+const assignDialog = ref(false);
+const selectedSeason = ref(null);
+
+const activeTab = ref(0);
+
+const isAdmin = computed(() => auth.user?.Role === "Admin");
+const isStaff = computed(() => ["Admin", "Employee"].includes(auth.user?.Role));
+const isMobile = computed(() => window.innerWidth < 768);
+
+const today = new Date();
+
+/* SEASON LABEL */
+function seasonLabel(s) {
+  if (!s) return "-";
+  return `${s.year_start}/${s.year_end}`;
 }
 
-const worksTabRef = ref(null);
 
-function refreshWorks() {
-  if (worksTabRef.value?.fetchWorks) {
-    worksTabRef.value.fetchWorks();
-  }
-}
-
-
-onMounted(() => {
-  window.addEventListener("resize", handleResize);
-});
-
-onUnmounted(() => {
-  window.removeEventListener("resize", handleResize);
-});
-
+/* LOAD CONTENT */
 onMounted(async () => {
   try {
     const id = route.params.id;
-    const qr = route.query.qr;
+    boat.value = await getBoat(id);
 
-    if (qr) {
-      boat.value = await getBoatByQR(qr);
-    } else if (id) {
-      boat.value = await getBoat(id);
-    } else {
-      throw new Error("No boat identifier provided");
-    }
+    seasons.value = await getSeasons();
+    storages.value = await getBoatStorageByBoat(boat.value.BID);
   } catch (err) {
-    error.value = err.message || "Failed to load boat details";
-    toast.add({
-      severity: "error",
-      summary: "Error",
-      detail: error.value,
-      life: 3000,
-    });
+    error.value = err.message || "Load error";
   } finally {
     loading.value = false;
   }
 });
 
-watch(
-  () => route.query.tab,
-  (tab) => {
-    activeTab.value = tabIndexMap[tab] ?? 0;
-  },
-  { immediate: true }
+/* ACTIVE STORAGE */
+const activeStorage = computed(() =>
+  storages.value.find((s) => {
+    if (!s.season) return false;
+    const start = new Date(s.season.startDate);
+    const end = new Date(s.season.endDate);
+    return today >= start && today <= end;
+  }) || null
 );
 
-const isAdmin = computed(() => auth.user?.Role === "Admin");
-const showQRDialog = ref(false);
+const previousStorages = computed(() =>
+  storages.value.filter((s) => s.season && new Date(s.season.endDate) < today)
+);
 
-function goToHallMap() {
-  if (!boat.value?.Boathall) return;
+const nextSeasons = computed(() =>
+  seasons.value
+    .filter((s) => new Date(s.startDate) > today)
+    .map((season) => ({
+      season,
+      AID: storages.value.find((st) => st.seasonID === season.seasonID)?.AID || null
+    }))
+);
 
-  router.push({
-    name: "HallMap",
-    params: { id: boat.value.Boathall.BHID },
-    query: { boat: boat.value.BID },
+/**
+ * ✅ Dropdown expects {label, seasonID}
+ */
+const availableSeasons = computed(() =>
+  seasons.value
+    .filter((s) => !storages.value.some((st) => st.seasonID === s.seasonID))
+    .map((s) => ({
+      ...s,
+      label: `${s.year_start}/${s.year_end}`,
+    }))
+);
+
+/* NAV */
+function goToStorage(AID) {
+  router.push(`/home/storage/${AID}`);
+}
+
+function goToHistory() {
+  router.push(`/home/boat/${boat.value.BID}/history`);
+}
+
+/* ASSIGN */
+function openAssignDialog() {
+  selectedSeason.value = null;
+  assignDialog.value = true;
+}
+
+async function confirmAssign() {
+  try {
+    const res = await createBoatStorage({
+      BID: boat.value.BID,
+      seasonID: selectedSeason.value,
+    });
+
+    assignDialog.value = false;
+  } catch (err) {
+    alert("Error: " + (err.message || err));
+  }
+}
+
+/* SORTED STORAGES: active → future → past */
+const sortedStorages = computed(() => {
+  return [...storages.value].sort((a, b) => {
+    const aStart = new Date(a.Season.startDate);
+    const bStart = new Date(b.Season.startDate);
+    return bStart - aStart;
   });
+});
+
+
+/* STORAGE STATUS */
+function storageStatusLabel(s) {
+  const start = new Date(s.Season.startDate);
+  const end = new Date(s.Season.endDate);
+
+  if (today >= start && today <= end) return t("season.active");
+  if (today < start) return t("season.upcoming");
+  return t("season.previous");
+}
+
+
+/* STORAGE COLOR */
+function storageClass(s) {
+  const start = new Date(s.Season.startDate);
+  const end = new Date(s.Season.endDate);
+
+  if (today >= start && today <= end)
+    return "bg-green-100 border-green-300";
+
+  if (today < start)
+    return "bg-blue-50 border-blue-200";
+
+  return "bg-gray-50 border-gray-200";
 }
 </script>
+
+<style>
+.custom-dialog .p-dialog-content {
+  padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+  padding: 1.2rem 1.5rem !important;
+}
+</style>

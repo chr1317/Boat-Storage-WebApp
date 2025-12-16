@@ -9,7 +9,7 @@ router.get("/me", auth(), UserController.getMe);
 router.put("/me", auth(), UserController.updateMe);
 
 // ADMIN: list + create
-router.get("/", auth(["Admin"]), UserController.list);
+router.get("/", auth(["Admin", "Employee"]), UserController.list);
 router.post("/", auth(["Admin"]), UserController.create);
 
 // SINGLE USER

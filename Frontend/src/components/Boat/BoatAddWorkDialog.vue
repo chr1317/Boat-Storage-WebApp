@@ -4,6 +4,7 @@
     modal
     :header="t('boat.addWork')"
     :style="{ width: '600px' }"
+    class="custom-dialog"
     @update:visible="val => emit('update:visible', val)"
   >
     <div v-if="loading" class="flex justify-center items-center py-8">
@@ -12,53 +13,38 @@
 
     <div v-else class="flex flex-col gap-4">
 
-      <!-- 🔹 Select BOAT (Tylko jeśli boatId NIE przekazany) -->
-      <div v-if="!props.boatId">
-        <label class="font-semibold block mb-1">{{ t('boat.select_boat') }}</label>
-
-        <Dropdown
-          v-model="selectedBoat"
-          :options="boats"
-          optionLabel="name"
-          optionValue="BID"
-          filter
-          placeholder="Choose boat"
-          class="w-full"
-        >
-          <template #option="{ option }">
-  <div class="flex justify-between items-center w-full px-1">
-    <span class="truncate">
-      {{ option.name }}
-    </span>
-    <small class="text-gray-400 ml-2 truncate">
-      ID: {{ option.BID }}
-      • Owner: {{ option.User?.Name }} {{ option.User?.Lastname }}
-    </small>
-  </div>
-</template>
-
-        </Dropdown>
-      </div>
-
       <!-- 🔹 Select SERVICE -->
       <div>
         <label class="font-semibold block mb-1">{{ t('boat.select_service') }}</label>
 
         <Dropdown
-          v-model="selectedService"
-          :options="availableServices"
+          v-model="form.SID"
+          :options="services"
           optionLabel="Name"
           optionValue="SID"
-          placeholder="Start typing to search service"
+          placeholder="Select service"
           class="w-full"
           filter
-          filterPlaceholder="Type to filter"
-          :virtualScrollerOptions="{ itemSize: 38 }"
+        />
+      </div>
+
+      <!-- 🔹 Select WORKER -->
+      <div>
+        <label class="font-semibold block mb-1">{{ t('boat.select_worker') }}</label>
+
+        <Dropdown
+          v-model="form.UID"
+          :options="workers"
+          optionLabel="Name"
+          optionValue="UID"
+          placeholder="Choose worker"
+          class="w-full"
+          filter
         >
           <template #option="{ option }">
-            <div class="flex justify-between items-center w-full px-1">
-              <span class="truncate">{{ option.Name }}</span>
-              <small class="text-gray-400">{{ option.Part }}</small>
+            <div class="flex justify-between w-full">
+              <span>{{ option.Name }} {{ option.Lastname }}</span>
+              <small class="text-gray-400">{{ option.Role }}</small>
             </div>
           </template>
         </Dropdown>
@@ -67,8 +53,15 @@
       <!-- 🔹 Comment -->
       <div>
         <label class="font-semibold block mb-1">{{ t('boat.comment') }}</label>
-        <Textarea v-model="comment" rows="3" class="w-full" autoResize />
+        <Textarea v-model="form.Comment" rows="3" class="w-full" autoResize />
       </div>
+
+      <!-- 🔹 Hours (optional) -->
+      <div>
+        <label class="font-semibold block mb-1">Hours (optional)</label>
+        <InputNumber v-model="form.HR" class="w-full" />
+      </div>
+
     </div>
 
     <template #footer>
@@ -76,7 +69,7 @@
       <Button
         label="Save"
         @click="save"
-        :disabled="!selectedService || (!props.boatId && !selectedBoat)"
+        :disabled="!form.SID || !form.UID"
       />
     </template>
   </Dialog>
@@ -86,29 +79,31 @@
 import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useToast } from "primevue/usetoast";
+
 import { getServices } from "../../services/serviceService";
-import { getBoats } from "../../services/boatService";
-import { createWork } from "../../services/workService";
+import { getUsers } from "../../services/userService";
+import { createWorkForStorage } from "../../services/workService";
 
 const { t } = useI18n({ useScope: "global" });
 const toast = useToast();
 
 const props = defineProps({
   visible: Boolean,
-  boatId: { type: Number, required: false },
-  seasonId: { type: Number, required: false }, // może być null
-  userId: { type: Number, required: true },
+  AID: { type: Number, required: true },
 });
 
 const emit = defineEmits(["update:visible", "created"]);
 
 const loading = ref(false);
-const boats = ref([]);
-const selectedBoat = ref(null);
+const services = ref([]);
+const workers = ref([]);
 
-const availableServices = ref([]);
-const selectedService = ref(null);
-const comment = ref("");
+const form = ref({
+  SID: null,
+  UID: null,
+  Comment: "",
+  HR: null,
+});
 
 onMounted(loadData);
 
@@ -116,17 +111,15 @@ async function loadData() {
   try {
     loading.value = true;
 
-    availableServices.value = await getServices();
+    services.value = await getServices();
 
-    if (!props.boatId) {
-      boats.value = await getBoats();
-    }
+    const users = await getUsers();
+    workers.value = users.filter(u => ["Admin", "Employee"].includes(u.Role));
 
   } catch (err) {
     toast.add({
       severity: "error",
-      summary: "Error",
-      detail: t("boat.load_error"),
+      summary: "Error loading data",
       life: 3000,
     });
   } finally {
@@ -135,19 +128,16 @@ async function loadData() {
 }
 
 async function save() {
-  const BID = props.boatId || selectedBoat.value;
-
-  if (!BID || !selectedService.value) return;
+  if (!form.value.SID || !form.value.UID) return;
 
   try {
     loading.value = true;
 
-    await createWork({
-      SID: selectedService.value,
-      BID,
-      seasonID: props.seasonId || null,
-      UID: props.userId,
-      Comment: comment.value || "Created via frontend",
+    await createWorkForStorage(props.AID, {
+      SID: form.value.SID,
+      UID: form.value.UID,
+      Comment: form.value.Comment || "",
+      HR: form.value.HR || null,
       State: "ToDo",
     });
 
@@ -160,11 +150,12 @@ async function save() {
     emit("created");
     emit("update:visible", false);
 
+    form.value = { SID: null, UID: null, Comment: "", HR: null };
+
   } catch (err) {
     toast.add({
       severity: "error",
-      summary: "Error",
-      detail: t("boat.create_error"),
+      summary: "Error creating work",
       life: 3000,
     });
   } finally {
@@ -172,3 +163,13 @@ async function save() {
   }
 }
 </script>
+
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
+</style>

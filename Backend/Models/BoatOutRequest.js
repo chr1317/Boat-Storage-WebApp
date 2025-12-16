@@ -1,4 +1,3 @@
-// Backend/Models/BoatOutRequest.js
 module.exports = (sequelize, DataTypes) => {
   const BoatOutRequest = sequelize.define("BoatOutRequest", {
     RQID: {
@@ -7,25 +6,26 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
     },
 
-    // powiązanie z łodzią
     BID: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
 
-    // powiązanie z sezonem (opcjonalne, ale fajnie mieć)
+    AID: {
+      type: DataTypes.INTEGER,
+      allowNull: true
+    },
+
     seasonID: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
 
-    // kto wysłał (Client) – UID z tabeli User
     requestedBy: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
 
-    // kto zatwierdził/odrzucił (Admin/Employee)
     handledBy: {
       type: DataTypes.INTEGER,
       allowNull: true,

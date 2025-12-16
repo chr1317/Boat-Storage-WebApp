@@ -40,9 +40,10 @@
   <Dialog
     v-model:visible="UserDetailsDialogVisible"
     modal
-    header="User details"
+    :header='t("services.details")'
     :style="{ width: '90vw', maxWidth: '500px' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
+    class="custom-dialog"
   >
     <div v-if="selectedUser" class="flex flex-col gap-4">
       <div class="flex flex-col gap-3">
@@ -86,6 +87,7 @@
     :header="isEditing ? t('services.edit') : t('services.add')"
     :style="{ width: '90vw', maxWidth: '450px' }"
     :breakpoints="{ '960px': '75vw', '640px': '90vw' }"
+    class="custom-dialog"
   >
     <div class="flex flex-col gap-4">
       <div>
@@ -213,4 +215,13 @@ async function deleteService() {
     height: 100vh !important;
   }
 }
+
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+    padding: 1.2rem 1.5rem !important;
+}
 </style>
+

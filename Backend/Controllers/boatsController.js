@@ -162,34 +162,106 @@ module.exports = {
   //------------------------------------
   // GET BOAT BY QR
   //------------------------------------
-  async getBoatByQR(req, res) {
-    try {
-      const { qr } = req.params;
-      if (!qr) return res.status(400).json({ error: "Missing QR parameter" });
+async getBoatByQR(req, res) {
+  try {
+    const { qr } = req.params;
+    if (!qr) return res.status(400).json({ error: "Missing QR parameter" });
 
-      const boat = await models.Boats.findOne({
-        where: { QR: qr },
-        include: [
-          { model: models.User, attributes: { exclude: ["Password"] } },
-          models.Boathalls,
-          models.BoatDimensions,
-          models.EngineInformation,
-          models.BoatPosition,
-        ]
-      });
+    const boat = await models.Boats.findOne({
+      where: { QR: qr },
+      include: [
+        { model: models.User, attributes: { exclude: ["Password"] } },
+        models.Boathalls,
+        models.BoatDimensions,
+        models.EngineInformation,
+        models.BoatPosition,
+      ]
+    });
 
-      if (!boat) return res.status(404).json({ error: "Boat not found" });
+    if (!boat) return res.status(404).json({ error: "Boat not found" });
 
-      const isAdmin = ["Admin","Employee"].includes(req.user.role);
-      if (!isAdmin && boat.UID !== req.user.id)
-        return res.status(403).json({ error: "No permission" });
-
-      res.json(boat);
-    } catch (e) {
-      console.error(e);
-      res.status(500).json({ error: "Server error while fetching boat by QR" });
+    const isStaff = ["Admin", "Employee"].includes(req.user.role);
+    if (!isStaff && boat.UID !== req.user.id) {
+      return res.status(403).json({ error: "No permission" });
     }
-  },
+
+    // 🔹 SZUKAMY AKTUALNEGO STORAGE
+    const now = new Date();
+
+    const activeStorage = await models.BoatStorage.findOne({
+      where: {
+        BID: boat.BID
+      },
+      include: [
+        {
+          model: models.Seasons,
+          where: {
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now }
+          }
+        }
+      ]
+    });
+
+    res.json({
+      boat,
+      activeStorage: activeStorage || null
+    });
+
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Server error while fetching boat by QR" });
+  }
+},
+
+
+
+async getBoatQRContext(req, res) {
+  console.log("QR =", qr);
+console.log("USER =", req.user);
+console.log("ROLE =", req.user.role, req.user.Role);
+console.log("ACTIVE STORAGE =", activeStorage?.AID);
+  try {
+    const { qr } = req.params;
+    if (!qr) return res.status(400).json({ error: "Missing QR" });
+
+    const boat = await models.Boats.findOne({
+      where: { QR: qr },
+    });
+
+    if (!boat) return res.status(404).json({ error: "Boat not found" });
+
+    const isStaff = ["Admin", "Employee"].includes(req.user.role);
+    if (!isStaff && boat.UID !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const now = new Date();
+
+    const activeStorage = await models.BoatStorage.findOne({
+      where: { BID: boat.BID },
+      include: [
+        {
+          model: models.Seasons,
+          where: {
+            startDate: { [Op.lte]: now },
+            endDate: { [Op.gte]: now },
+          },
+        },
+      ],
+    });
+
+    // 🔥 JEDNOZNACZNY KONTRAKT
+    res.json({
+      BID: boat.BID,
+      AID: activeStorage ? activeStorage.AID : null,
+    });
+  } catch (e) {
+    console.error("QR context error:", e);
+    res.status(500).json({ error: "QR context error" });
+  }
+},
+
 
   //------------------------------------
   // UPDATE BOAT

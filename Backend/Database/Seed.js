@@ -14,10 +14,11 @@ function seasonDates() {
   return {
     yStart: y,
     yEnd: y + 1,
-    start_date: `${y}-10-01`,
-    end_date: `${y + 1}-04-30`,
+    startDate: `${y}-10-01`,
+    endDate: `${y + 1}-04-30`,
   };
 }
+
 
 async function ensureUniqueIndexBoatStorage() {
   await sequelize.query(`
@@ -36,9 +37,9 @@ async function seed(force = false) {
 
   await ensureUniqueIndexBoatStorage();
 
-  // ======================================
+  // ============================
   // USERS
-  // ======================================
+  // ============================
   const admin = await models.User.create({
     Name: "Admin",
     Password: await bcrypt.hash("Admin123!", 10),
@@ -82,20 +83,19 @@ async function seed(force = false) {
     },
   ]);
 
-  // ======================================
-  // SEASON
-  // ======================================
-  const s = seasonDates();
-  const season = await models.Seasons.create({
-    year_start: s.yStart,
-    year_end: s.yEnd,
-    startDate: s.start_date,
-    endDate: s.end_date,
-  });
+const s = seasonDates();
+const season = await models.Seasons.create({
+  year_start: s.yStart,
+  year_end: s.yEnd,
+  startDate: s.startDate, // ← POPRAWNE
+  endDate: s.endDate,     // ← POPRAWNE
+});
 
-  // ======================================
+
+
+  // ============================
   // HALL
-  // ======================================
+  // ============================
   const hall = await models.Boathalls.create({
     Length: 3000,
     Width: 2500,
@@ -104,66 +104,29 @@ async function seed(force = false) {
     Name: "Main Winter Hall",
   });
 
-  // ======================================
-  // SERVICES — FINAL LIST FOR DEMO
-  // ======================================
-  const allServices = await models.Services.bulkCreate([
-    // ENGINE
+  // ============================
+  // SERVICES
+  // ============================
+  await models.Services.bulkCreate([
     { Part: "Engine", Name: "Engine service" },
     { Part: "Engine", Name: "Oil change" },
-    { Part: "Engine", Name: "Fuel filter replacement" },
-    { Part: "Engine", Name: "Impeller replacement" },
-    { Part: "Engine", Name: "Coolant flush" },
-    { Part: "Engine", Name: "Thermostat replacement" },
-    { Part: "Engine", Name: "Sea water pump service" },
-
-    // DRIVE / PROPULSION
-    { Part: "Drive", Name: "Drive service" },
-    { Part: "Drive", Name: "Gear oil replacement" },
-    { Part: "Drive", Name: "Propeller inspection" },
-    { Part: "Drive", Name: "Stern drive inspection" },
-
-    // HULL
     { Part: "Hull", Name: "Hull washing" },
-    { Part: "Hull", Name: "Painting underside" },
-    { Part: "Hull", Name: "Antifouling painting" },
-    { Part: "Hull", Name: "Gelcoat polishing" },
-
-    // DECK
     { Part: "Deck", Name: "Teak cleaning" },
-    { Part: "Deck", Name: "Deck wash" },
-    { Part: "Deck", Name: "Stainless steel polishing" },
-
-    // ELECTRICAL
-    { Part: "Electrical", Name: "Battery check" },
-    { Part: "Electrical", Name: "Navigation lights repair" },
-    { Part: "Electrical", Name: "Charging system test" },
-
-    // SAFETY
-    { Part: "Safety", Name: "Fire extinguisher check" },
-    { Part: "Safety", Name: "Lifejacket inspection" },
-    { Part: "Safety", Name: "Bilge pump test" },
-
-    // WATER SYSTEM
-    { Part: "Water", Name: "Water tank cleaning" },
-    { Part: "Water", Name: "Pump inspection" },
-
-    // SEASON PREP
-    { Part: "Season Prep", Name: "Summer preparation" },
-    { Part: "Season Prep", Name: "Winter storage preparation" },
+    { Part: "Drive", Name: "Gear oil replacement" },
   ]);
 
-  // ======================================
-  // BOATS (10 boats)
-  // ======================================
+  // ============================
+  // BOATS + STORAGE + POSITION
+  // ============================
   const boatNames = [
     "Aurora", "Sea Queen", "Blue Horizon",
-    "Baltic Star", "Wind Rider", "Poseidon II",
-    "Silver Wave", "Stormbreaker", "Sun Chaser",
-    "North Explorer",
+    "Stormbreaker", "Sun Chaser", "North Explorer",
   ];
 
   const boats = [];
+
+  let cursorX = hall.MarginCM;
+  let cursorY = hall.MarginCM;
 
   for (let i = 0; i < boatNames.length; i++) {
     const client = clients[i % clients.length];
@@ -190,23 +153,16 @@ async function seed(force = false) {
       T_Color: ["Brown", "Teak", "White"][i % 3],
     });
 
-    await models.BoatStorage.create({
+    // STORAGE AID RECORD
+    const storage = await models.BoatStorage.create({
       BID: boat.BID,
       seasonID: season.seasonID,
       IsComing: true,
+      ArrivalDate: new Date(),
       Budget: rand(5000, 20000),
     });
 
-    boats.push({ boat, dims });
-  }
-
-  // ======================================
-  // POSITIONS
-  // ======================================
-  let cursorX = hall.MarginCM;
-  let cursorY = hall.MarginCM;
-
-  for (const { boat, dims } of boats) {
+    // POSITION LINKED TO AID
     const w = dims.Width + hall.MarginCM;
     const l = dims.Length + hall.MarginCM;
 
@@ -216,6 +172,7 @@ async function seed(force = false) {
     }
 
     await models.BoatPosition.create({
+      AID: storage.AID,
       BHID: hall.BHID,
       BID: boat.BID,
       PosX: cursorX,
@@ -225,33 +182,41 @@ async function seed(force = false) {
     });
 
     cursorX += w + hall.MarginCM;
+
+    boats.push({ boat, storage });
   }
 
-  // ======================================
-  // PROBLEMS (clean, simple)
-  // ======================================
-  const problemTemplates = [
-    { Part: "Engine", Problem: "Engine overheating" },
-    { Part: "Hull", Problem: "Scratches on hull" },
-    { Part: "Electrical", Problem: "Battery discharging" },
-    { Part: "Deck", Problem: "Loose cleat" },
-  ];
-
-  for (const { boat } of boats) {
-    const template = problemTemplates[rand(0, problemTemplates.length - 1)];
-
+  // ============================
+  // PROBLEMS — per AID (not per season)
+  // ============================
+  for (const { boat, storage } of boats) {
     await models.Problems.create({
+      AID: storage.AID,
       BID: boat.BID,
-      Part: template.Part,
-      Problem: template.Problem,
-      Description: template.Problem,
+      Part: "Engine",
+      Problem: "Engine overheating",
+      Description: "Detected during initial inspection",
       Date: new Date(),
       Solved: false,
-      seasonID: season.seasonID,
     });
   }
 
-  console.log("🎉 SIMPLE SEED COMPLETED — Ready for demo!");
+  // ============================
+  // WORK — demo entries
+  // ============================
+  for (const { boat, storage } of boats) {
+    await models.Work.create({
+      AID: storage.AID,
+      BID: boat.BID,
+      SID: 1,
+      Comment: "General checkup",
+      Date: new Date(),
+      HR: 2,
+      State: "ToDo",
+    });
+  }
+
+  console.log("🎉 FULLY UPDATED SEED COMPLETED — SYSTEM WORKS WITH AID!");
 }
 
 module.exports = { seed };

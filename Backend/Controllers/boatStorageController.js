@@ -1,5 +1,7 @@
 // controllers/boatStorageController.js
 const { models, sequelize } = require("../Database/db");
+const { QueryTypes } = require("sequelize");
+
 
 module.exports = {
   async create(req, res) {
@@ -49,6 +51,89 @@ module.exports = {
     }
   },
 
+  async listLight(req, res) {
+  try {
+    const rows = await sequelize.query(
+      `
+      SELECT
+        bs.AID,
+        bs.ArrivalDate,
+        bs.Budget,
+
+        b.BID,
+        b.name        AS boatName,
+        b.HIN         AS boatHIN,
+
+        u.UID,
+        u.Name        AS ownerName,
+
+        s.seasonID,
+        s.startDate,
+        s.endDate,
+        s.year_start,
+        s.year_end
+
+      FROM boat_storage bs
+      JOIN boats b      ON b.BID = bs.BID
+      JOIN users u      ON u.UID = b.UID
+      JOIN seasons s    ON s.seasonID = bs.seasonID
+
+      ORDER BY bs.AID ASC
+      `,
+      { type: QueryTypes.SELECT }
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error while listing storage entries (light)" });
+  }
+},
+
+
+
+async byBoat(req, res) {
+  try {
+    const BID = parseInt(req.params.bid, 10);
+    if (!BID) {
+      return res.status(400).json({ error: "Invalid BID" });
+    }
+
+    const isStaff = ["Admin", "Employee"].includes(req.user.role);
+
+    // 🔐 CLIENT: sprawdzamy własność łodzi
+    if (!isStaff) {
+      const boat = await models.Boats.findOne({
+        where: {
+          BID,
+          UID: req.user.id
+        }
+      });
+
+      if (!boat) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+    }
+
+    // 📦 dane pobieramy BEZ ograniczeń
+    const list = await models.BoatStorage.findAll({
+      where: { BID },
+      include: [
+        { model: models.Boats },
+        { model: models.Seasons }
+      ],
+      order: [["AID", "ASC"]]
+    });
+
+    res.json(list);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error while getting boat storage list" });
+  }
+},
+
+
+
   async mine(req, res) {
     try {
       if (["Admin", "Employee"].includes(req.user.role)) {
@@ -73,19 +158,42 @@ module.exports = {
     }
   },
 
-  async getOne(req, res) {
-    try {
-      const id = parseInt(req.params.id, 10);
-      const rec = await models.BoatStorage.findByPk(id, {
-        include: [{ model: models.Boats }, { model: models.Seasons }]
-      });
-
-      if (!rec) return res.status(404).json({ error: "Storage entry not found" });
-      res.json(rec);
-    } catch {
-      res.status(500).json({ error: "Server error while getting storage entry" });
+async getOne(req, res) {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ error: "Invalid AID" });
     }
-  },
+
+    const rec = await models.BoatStorage.findByPk(id, {
+      include: [
+        {
+          model: models.Boats,
+        },
+        {
+          model: models.Seasons,
+        }
+      ]
+    });
+
+    if (!rec) {
+      return res.status(404).json({ error: "Storage entry not found" });
+    }
+
+    const isStaff = ["Admin", "Employee"].includes(req.user.role);
+
+    // 🔐 CLIENT → tylko jeśli to jego łódź
+    if (!isStaff && rec.Boat.UID !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    res.json(rec);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error while getting storage entry" });
+  }
+},
+
 
   async update(req, res) {
     const t = await sequelize.transaction();

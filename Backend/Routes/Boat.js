@@ -14,6 +14,8 @@ router.post("/", auth(["Admin","Employee"]), BoatsController.createBoat);
 // LIST
 router.get("/", auth(["Admin","Employee","Client"]), BoatsController.listBoats);
 
+// router.get("/byqr/:qr/context", auth(["Admin", "Employee", "Client"]), BoatsController.getBoatQRContext);
+
 // GET ONE
 router.get("/:id", auth(["Admin","Employee","Client"]), BoatsController.getBoat);
 

@@ -54,6 +54,7 @@
       header="Delete boat"
       :modal="true"
       :style="{ width: '450px' }"
+      class="custom-dialog"
     >
       <p class="mb-4">
         Are you sure you want to delete boat
@@ -170,3 +171,12 @@ async function confirmDelete() {
   }
 }
 </script>
+<style>
+.custom-dialog .p-dialog-content {
+    padding: 1.5rem !important;
+}
+
+.custom-dialog .p-dialog-header {
+  padding: 1.2rem 1.5rem !important;
+}
+</style>

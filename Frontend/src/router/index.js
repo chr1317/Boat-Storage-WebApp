@@ -18,6 +18,10 @@ const HallMapView = () => import("../views/HallMapView.vue");
 const ProblemListView = () => import("../views/ProblemListView.vue");
 const WorkListView = () => import("../views/WorkListView.vue");
 const BoatHallsView = () => import("../views/BoatHallsView.vue");
+const BoatStorageDetailsView = () => import("../views/BoatStorageDetailsView.vue");
+const BoatActiveStorageListView = () => import("../views/BoatActiveStorageListView.vue");
+const BoatServiceHistoryView = () => import("../views/BoatServiceHistoryView.vue");
+const SeasonsListView = () => import("../views/SeasonsListView.vue");
 
 const routes = [
   { path: "/", redirect: "/home" },
@@ -56,6 +60,19 @@ const routes = [
       name: "BoatDetails",
       component: BoatDetailsView,
       meta: { title: "Boat Details" },
+    },
+    {
+      path: "storage",
+      name: "BoatStorage",
+      component: BoatActiveStorageListView,
+      meta: { title: "Boat Storage" },
+    },
+    {
+      path: "storage/:AID",
+      name: "BoatStorageDetail",
+      component: BoatStorageDetailsView,
+      props: true,
+      meta: { requiresAuth: true },
     },
     {
       path: "services",
@@ -105,6 +122,18 @@ const routes = [
       component: BoatHallsView,
       meta: { title: "BoatHalls", roles: ["Admin", "Employee"] },
     },
+    {
+      path: "boat/:id/history",
+      name: "BoatHistory",
+      component: BoatServiceHistoryView,
+      meta: { title: "Boat History", roles: ["Admin", "Employee"] },
+    },
+    {
+      path: "seasons",
+      name: "Seasons",
+      component: SeasonsListView,
+      meta: { title: "Seasons", roles: ["Admin", "Employee"] },
+    }
   ],
 }
 

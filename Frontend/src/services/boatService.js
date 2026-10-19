@@ -31,9 +31,9 @@ export async function getBoatByQR(qrCode) {
 }
 
 
-export function getActiveStorageByQR(qr) {
-  return apiFetch(`/boats/qr/${qr}/active-storage`);
-}
+// export function getActiveStorageByQR(qr) {
+//   return apiFetch(`/boats/qr/${qr}/active-storage`);
+// }
 
 
 export async function getBoatWorkHistory(id) {

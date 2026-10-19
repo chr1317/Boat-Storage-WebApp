@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "../secret_key.env" });
+// require("dotenv").config({ path: "../secret_key.env" });
 const { Sequelize } = require("sequelize");
 const initModels = require("../Models/Initmodels");
 

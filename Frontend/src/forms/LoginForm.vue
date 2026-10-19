@@ -92,7 +92,7 @@ async function handleLogin() {
       life: 3000,
     });
 
-    const redirect = router.currentRoute.value.query.redirect || "/home/dashboard";
+    const redirect = router.currentRoute.value.query.redirect || "/home/Dashboard";
     router.push(redirect);
   } catch (err) {
     toast.add({

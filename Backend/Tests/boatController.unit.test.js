@@ -396,21 +396,20 @@ describe("boatsController.getBoatByQR", () => {
     expect(res.json).toHaveBeenCalledWith({ error: "No permission" });
   });
 
-  it("returns boat when allowed", async () => {
+  it("returns QR context when allowed", async () => {
   const req = { params: { qr: "abc" }, user: { role: "Admin", id: 1 } };
   const res = mockResponse();
 
-  const boat = { BID: 1, UID: 999 };
-
-  models.Boats.findOne.mockResolvedValue(boat);
-  models.BoatStorage.findOne.mockResolvedValue(null); 
+  models.Boats.findOne.mockResolvedValue({ BID: 1, UID: 999 });
+  models.BoatStorage.findOne.mockResolvedValue(null);
 
   await boatsController.getBoatByQR(req, res);
 
   expect(res.json).toHaveBeenCalledWith({
-    boat,
-    activeStorage: null,
+    BID: 1,
+    AID: null,
   });
+});
 });
 
 
@@ -427,7 +426,6 @@ describe("boatsController.getBoatByQR", () => {
       error: "Server error while fetching boat by QR",
     });
   });
-});
 
 // ---------------------------------------------------------------------
 // UPDATE BOAT

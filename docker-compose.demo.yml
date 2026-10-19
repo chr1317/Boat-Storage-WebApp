@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: boatdb
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    build: .
+    restart: always
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile.dev
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL:
+      VITE_PUBLIC_BASE_URL:
+    stdin_open: true
+    tty: true
+
+volumes:
+  mysql_data:

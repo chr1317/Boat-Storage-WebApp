@@ -16,23 +16,44 @@ app.use((req, _res, next) => {
   next();
 });
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN
+const corsOriginList = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
-  : ["http://localhost:5173", "http://localhost:3000", "http://192.168.68.105:5173"];
+  : ["http://localhost:5173", "http://127.0.0.1:5173"];
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  try {
+    const u = new URL(origin);
+    const h = u.hostname;
+
+    if (h === "localhost" || h === "127.0.0.1") return true;
+
+    if (
+      /^192\.168\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(h)
+    ) return true;
+
+    return corsOriginList.includes(origin);
+  } catch {
+    return false;
+  }
+}
 
 app.use(
   cors({
-    origin: CORS_ORIGIN,
+    origin: (origin, cb) => cb(null, isAllowedOrigin(origin)),
     credentials: true,
     exposeHeaders: ["Content-Type", "Content-Disposition"],
   })
 );
 
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", env: process.env.NODE_ENV || "dev", time: new Date().toISOString() });
 });
 
-const routesPath = path.join(__dirname, "routes");
+const routesPath = path.join(__dirname, "Routes");
 if (fs.existsSync(routesPath)) {
   fs.readdirSync(routesPath).forEach((file) => {
     if (!file.endsWith(".js")) return;
@@ -59,13 +80,9 @@ if (process.env.NODE_ENV !== "test") {
       const { sequelize } = require("./Database/db");
       const { seed } = require("./Database/Seed");
 
-      if (process.env.DEV_RESET_DB === "true") {
-        await seed(true);
-        console.log("✅ Database reseeded");
-      } else {
-        await sequelize.sync();
-        console.log("✅ Database synced");
-      }
+      await sequelize.sync();  
+      await seed();        
+
 
       const PORT = parseInt(process.env.PORT || "3000", 10);
       const HOST = process.env.HOST || "0.0.0.0";

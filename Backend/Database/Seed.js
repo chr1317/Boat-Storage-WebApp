@@ -18,6 +18,38 @@ function seasonDates() {
     endDate: `${y + 1}-04-30`,
   };
 }
+async function wasSeeded() {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS seed_meta (
+      name VARCHAR(50) PRIMARY KEY,
+      seededAt DATETIME NOT NULL
+    )
+  `);
+
+  const [rows] = await sequelize.query(
+    "SELECT 1 FROM seed_meta WHERE name = 'initial' LIMIT 1"
+  );
+  return rows.length > 0;
+}
+
+
+async function markSeeded() {
+  await sequelize.query(`
+    CREATE TABLE IF NOT EXISTS seed_meta (
+      name VARCHAR(50) PRIMARY KEY,
+      seededAt DATETIME NOT NULL
+    )
+  `);
+
+  await sequelize.query(
+    "INSERT IGNORE INTO seed_meta (name, seededAt) VALUES ('initial', NOW())"
+  );
+}
+
+async function isDatabaseEmpty() {
+  const cnt = await models.User.count();
+  return cnt === 0;
+}
 
 
 async function ensureUniqueIndexBoatStorage() {
@@ -28,13 +60,13 @@ async function ensureUniqueIndexBoatStorage() {
 }
 
 async function seed(force = false) {
-  if (force) {
-    console.log("⚠ Dropping schema...");
-    await sequelize.sync({ force: true });
-  } else {
-    await sequelize.sync();
+
+   if (!(await isDatabaseEmpty())) {
+    console.log("🌱 DB already has data — skipping seed");
+    return;
   }
 
+  console.log("🌱 Empty DB — running seed");
   await ensureUniqueIndexBoatStorage();
 
   // ============================
@@ -204,19 +236,26 @@ const season = await models.Seasons.create({
   // ============================
   // WORK — demo entries
   // ============================
+const engineService = await models.Services.findOne({
+  where: { Name: "Engine service" }
+});
+
   for (const { boat, storage } of boats) {
     await models.Work.create({
       AID: storage.AID,
       BID: boat.BID,
-      SID: 1,
-      Comment: "General checkup",
+      seasonID: season.seasonID,  
+      SID: engineService.SID,    
+      UID: employee.UID,         
+      Comment: "Initial technical inspection",
       Date: new Date(),
-      HR: 2,
+      HR: rand(1, 4),
       State: "ToDo",
     });
   }
 
-  console.log("🎉 FULLY UPDATED SEED COMPLETED — SYSTEM WORKS WITH AID!");
+  await markSeeded();
+  console.log("Seeded database");
 }
 
 module.exports = { seed };

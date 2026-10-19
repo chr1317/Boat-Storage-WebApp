@@ -42,7 +42,15 @@ const visibleProxy = computed({
   set: (val) => emit("update:visible", val),
 });
 
-const qrValue = computed(() => `${window.location.origin}/qr/${props.boat.QR || props.boat.BID}`);
+const BASE_URL =
+  import.meta.env.VITE_PUBLIC_BASE_URL ||
+  window.location.origin;
+
+const qrValue = computed(() =>
+  `${BASE_URL}/qr/${props.boat.QR || props.boat.BID}`
+);
+
+
 
 function printQR() {
   const w = window.open("", "_blank", "width=400,height=600");

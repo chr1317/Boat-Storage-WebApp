@@ -185,8 +185,8 @@ async getBoatByQR(req, res) {
     });
 
     res.json({
-      boat,
-      activeStorage: activeStorage || null
+      BID: boat.BID,
+      AID: activeStorage ? activeStorage.AID : null
     });
 
   } catch (e) {

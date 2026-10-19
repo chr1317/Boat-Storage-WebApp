@@ -75,7 +75,7 @@ scripts/run-demo.js
 
 **Prerequisites:** Docker with the Compose plugin, plus Node.js/npm if using the `npm run demo` launcher.
 
-1. Create `.env.docker` in the project root using the safe `.env.docker.example` template. Replace the example JWT/session secrets with fresh random values. **Do not commit `.env.docker`.**
+1. Create `.env.docker` in the project root using the safe `env.docker.example` template. Replace the example JWT/session secrets with fresh random values. **Do not commit `.env.docker`.**
 2. The provided demo Compose configuration uses a disposable MySQL development database. Ensure the database settings in `.env.docker` match `docker-compose.demo.yml`.
 3. From the root, run:
 
@@ -101,8 +101,6 @@ Install dependencies in the project root and run:
 npm install
 npm test
 ```
-
-Tests may require separate test database configuration. Their execution was not independently verified during this code review.
 
 ## Screenshots
 
@@ -142,6 +140,7 @@ Visualization of hall space and drag-and-drop placement of boats.
 This project demonstrates end-to-end development: user interfaces, server-side business logic, REST APIs, relational data modeling, application state management, testing and containerized local setup. It was developed as an individual engineering thesis.
 
 **Limitations:** This remains an academic demonstration. Authorization and account-recovery flows need additional hardening and testing before any real-world deployment.### Copyright & Usage
+
 
 Copyright © 2025–2026 Maciej Wiśniewski. All rights reserved.
 

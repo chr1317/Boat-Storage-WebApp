@@ -73,8 +73,6 @@ scripts/run-demo.js
 
 ## Running locally with Docker
 
-> These instructions require the **latest local project files**, including Docker setup files that were not yet committed in the reviewed local Git checkout. Do not expect the older repository snapshot to work with these instructions until those files are committed.
-
 **Prerequisites:** Docker with the Compose plugin, plus Node.js/npm if using the `npm run demo` launcher.
 
 1. Create `.env.docker` in the project root using the safe `.env.docker.example` template. Replace the example JWT/session secrets with fresh random values. **Do not commit `.env.docker`.**

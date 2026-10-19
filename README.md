@@ -1,13 +1,3 @@
-### Copyright & Usage
-
-Copyright © 2025–2026 Maciej Wiśniewski. All rights reserved.
-
-BoatHall is an individual engineering thesis project made publicly available for portfolio and educational review purposes.
-
-The original source code is proprietary and is not licensed for reuse, modification, or redistribution without prior permission from the copyright holder, except as permitted by applicable law and GitHub's Terms of Service.
-
-Third-party libraries and components remain subject to their respective licenses.
-
 # BoatHall — Boat Storage Management System
 
 BoatHall is a full-stack web application built as an **individual Computer Science engineering thesis project**. It is designed to help a boat storage business organize customer records, boats, storage seasons and hall space, as well as maintenance work and collection requests.
@@ -153,4 +143,12 @@ Visualization of hall space and drag-and-drop placement of boats.
 
 This project demonstrates end-to-end development: user interfaces, server-side business logic, REST APIs, relational data modeling, application state management, testing and containerized local setup. It was developed as an individual engineering thesis.
 
-**Limitations:** This remains an academic demonstration. Authorization and account-recovery flows need additional hardening and testing before any real-world deployment.
+**Limitations:** This remains an academic demonstration. Authorization and account-recovery flows need additional hardening and testing before any real-world deployment.### Copyright & Usage
+
+Copyright © 2025–2026 Maciej Wiśniewski. All rights reserved.
+
+BoatHall is an individual engineering thesis project made publicly available for portfolio and educational review purposes.
+
+The original source code is proprietary and is not licensed for reuse, modification, or redistribution without prior permission from the copyright holder, except as permitted by applicable law and GitHub's Terms of Service.
+
+Third-party libraries and components remain subject to their respective licenses.
